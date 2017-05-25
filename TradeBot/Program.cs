@@ -51,7 +51,7 @@ namespace TradeBot
             quotecom.SubQuotesDepth("6223");
             quotecom.SubQuotesMatch("6223");
             Console.ReadLine();
-            TradeBotBase tb = new TradeBotQA("6223", brokerid, account, 1, quotecom, tfcom,1.5);
+            TradeBotBase tb = new TradeBotQA("6223", brokerid, account, 1, quotecom, tfcom,1.5,109);
             tb.StatusChange += ShowChanges;
             tb.Start();
             //AddInfo(tfcom.Accounts);

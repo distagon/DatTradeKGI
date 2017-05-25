@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using Intelligence;
 using Package;
 using Smart;
+using TradeBot;
 
 
 namespace DayTradeKGIWinForm
@@ -46,7 +47,7 @@ namespace DayTradeKGIWinForm
 
             tfcom.OnRcvMessage += OntfcomRcvMessage;          //資料接收事件
             tfcom.OnGetStatus += OntfcomGetStatus;               //狀態通知事件
-            //tfcom.OnRcvServerTime += OntfcomRcvServerTime;   //接收主機時間
+            tfcom.OnRcvServerTime += OntfcomRcvServerTime;   //接收主機時間
             //tfcom.OnRecoverStatus += OntfcomRecoverStatus;   //回補狀態通知
         }
         #region API 事件處理
@@ -428,10 +429,17 @@ namespace DayTradeKGIWinForm
         }
         private  void OntfcomRcvServerTime(Object sender, DateTime serverTime, int ConnQuality)
         {
-
-            //labelServerTime.Text = String.Format("{0:yyyy/MM/dd hh:mm:ss.fff}", serverTime);
-            AddInfo(String.Format("{0:hh:mm:ss.fff}", serverTime));
-            AddInfo("[" + ConnQuality + "]");
+            if (this.InvokeRequired)
+            {
+                Smart.OnRcvServerTime_EventHandler d = new Smart.OnRcvServerTime_EventHandler(OntfcomRcvServerTime);
+                this.Invoke(d, new object[] { sender, serverTime, ConnQuality });
+                return;
+            }
+            tb_ServerTime.Text = String.Format("{0:yyyy/MM/dd hh:mm:ss.fff}", serverTime);
+            tb_HeartBeats.Text = ConnQuality.ToString();
+            
+            //AddInfo(String.Format("{0:hh:mm:ss.fff}", serverTime));
+            //AddInfo("[" + ConnQuality + "]");
         }
 
         private  void OntfcomRecoverStatus(object sender, string Topic, RECOVER_STATUS status, uint RecoverCount)
@@ -469,6 +477,12 @@ namespace DayTradeKGIWinForm
                 catch { };
             }
         }
+
+        private void ShowChanges(object sender, TradeStatus tradestatus, string msg)
+        {
+            AddInfo("Status:" + tradestatus + Environment.NewLine + "Message:" + msg);
+            Console.WriteLine("Message:" + msg);
+        }
         private void btn_Login_Click(object sender, EventArgs e)
         {
             host = this.cb_Host.Text;
@@ -485,6 +499,19 @@ namespace DayTradeKGIWinForm
             quotecom.Connect2Quote(host, port, id, pwd, area, "");
         }
 
+        private void btn_AddStock_Click(object sender, EventArgs e)
+        {
+            string stockid = tb_StockID.Text;
+            ushort buyqty = (ushort)nud_BuyQty.Value;
+            double stoplossratio = (double)nud_stoplossratio.Value;
+            double lockgainprice = (double)nud_LockGainPrice.Value;
+            quotecom.SubQuotesDepth("6223");
+            quotecom.SubQuotesMatch("6223");
 
+            
+            TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, stoplossratio, lockgainprice);
+            tb.StatusChange += ShowChanges;
+            tb.Start();
+        }
     }
 }

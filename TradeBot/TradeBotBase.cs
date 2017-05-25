@@ -57,7 +57,7 @@ namespace TradeBot
 
     public delegate void StatusChangeEventHandler(object sender, TradeStatus status, string msg);
 
-    abstract class  TradeBotBase
+    public abstract class  TradeBotBase
     {
         public event StatusChangeEventHandler StatusChange;
         private Intelligence.QuoteCom quotecom; //接收證券行情物件
@@ -77,11 +77,12 @@ namespace TradeBot
         public LockGainMode lockgainmode = LockGainMode.Manual; //停利模式
         private List<DealRpt> DealList = new List<DealRpt>(); //成交回報暫存，因為成交可能不會全部一次回報完成
         private double StopLossRatio = 0.0; //停損百分比
+        private double LockGainPrice = 0.0; //停利目標價
         //CDP
         public double OpenPrice; //今日開盤價
         public double ClosePrice; //昨日收盤價
         public double CDP_AH, CDP_NH, CDP_NL, CDP_AL;
-        public TradeBotBase(String stockid, string brokerid, string account, ushort BuyQty, Intelligence.QuoteCom quotecom, Smart.TaiFexCom taifexcom, double stoplossratio)
+        public TradeBotBase(String stockid, string brokerid, string account, ushort BuyQty, Intelligence.QuoteCom quotecom, Smart.TaiFexCom taifexcom, double stoplossratio,double lockgainprice)
         {
             this.stockid = stockid;
             this.quotecom = quotecom;
@@ -90,6 +91,7 @@ namespace TradeBot
             this.account = account;
             this.BuyQty = BuyQty;
             this.StopLossRatio = stoplossratio;
+            this.LockGainPrice = lockgainprice;
             
 
         }
