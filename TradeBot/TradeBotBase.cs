@@ -63,7 +63,7 @@ namespace TradeBot
         private Intelligence.QuoteCom quotecom; //接收證券行情物件
         private Smart.TaiFexCom taifexcom;// 券證下單物件
         public TradeStatus trade_status; //交易現況
-        private String stockid; //股票代號
+        public String stockid; //股票代號
         private String brokerid; //分行
         private String account;  //帳號
         private double currentBuyMatchPrice = 0.0; //買入成交金額平均

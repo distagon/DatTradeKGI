@@ -12,7 +12,6 @@ namespace TradeBot
    public class TradeBotQA : TradeBotBase
     {
         
-
         public TradeBotQA(string stockid, string brokerid, string account, ushort BuyQty, QuoteCom quotecom, TaiFexCom taifexcom, double stoplossratio,double lockgainprice) : base(stockid, brokerid, account, BuyQty, quotecom, taifexcom, stoplossratio,lockgainprice)
         {
             buy_mode = BuyMode.Auto;

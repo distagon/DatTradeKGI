@@ -11,9 +11,10 @@ using Intelligence;
 using Package;
 using Smart;
 using TradeBot;
+using System.IO;
 
 
-namespace DayTradeKGIWinForm
+namespace TradeBot
 {
     delegate void SetAddInfoCallBack(string text);
     public partial class Form_Main : Form
@@ -32,6 +33,9 @@ namespace DayTradeKGIWinForm
         private string group = "";
         public  string brokerid = "";
         public  string account = "";
+        public DataTable StockTable=new DataTable("StockList", "TradeBot");
+        private string DownloadTarget = "";
+
 
         public Form_Main()
         {
@@ -49,6 +53,63 @@ namespace DayTradeKGIWinForm
             tfcom.OnGetStatus += OntfcomGetStatus;               //狀態通知事件
             tfcom.OnRcvServerTime += OntfcomRcvServerTime;   //接收主機時間
             //tfcom.OnRecoverStatus += OntfcomRecoverStatus;   //回補狀態通知
+
+            //初始化表格
+            DataColumn StockIdCol = StockTable.Columns.Add("StockID", typeof(String)); //股票代號
+            StockTable.PrimaryKey = new DataColumn[] { StockIdCol };
+            StockTable.Columns.Add("Status", typeof(TradeStatus)); //目前狀態
+            StockTable.Columns.Add("Qty", typeof(Int16)); //預計買入張數
+            StockTable.Columns.Add("BuyAvgPrice", typeof(decimal)); //買入平均成本
+            StockTable.Columns.Add("SellAvgPrice", typeof(decimal)); //賣出平均成本
+            StockTable.Columns.Add("ROI", typeof(decimal)); //報酬率
+            StockTable.Columns.Add("ClosePrice", typeof(double)); //昨日收盤價
+            StockTable.Columns.Add("Open", typeof(decimal)); //今日開盤價
+            StockTable.Columns.Add("MatchTime", typeof(Int32)); //即時成交時間
+            StockTable.Columns.Add("MatchPrice", typeof(decimal)); //即時成交價
+            StockTable.Columns.Add("MatchQty", typeof(decimal));//即時成交量
+            StockTable.Columns.Add("TotalQty", typeof(decimal)); //累積成交量
+            StockTable.Columns.Add("AH", typeof(double));
+            StockTable.Columns.Add("NH", typeof(double));
+            StockTable.Columns.Add("NL", typeof(double));
+            StockTable.Columns.Add("AL", typeof(double));
+            StockTable.Columns.Add("TradeBot", typeof(TradeBotBase));
+            BindingSource bs = new BindingSource();
+            bs.DataSource = StockTable;
+            dgv_StockList.DataSource = bs;
+
+            //調整表格欄位名稱
+            dgv_StockList.Columns["StockID"].HeaderText = "代號";
+            dgv_StockList.Columns["Status"].HeaderText = "狀態";
+            dgv_StockList.Columns["Qty"].HeaderText = "買量";
+            dgv_StockList.Columns["BuyAvgPrice"].HeaderText = "買入平均成本";
+            dgv_StockList.Columns["SellAvgPrice"].HeaderText = "賣出平均成本";
+            dgv_StockList.Columns["ROI"].HeaderText = "報酬率";
+            dgv_StockList.Columns["ClosePrice"].HeaderText = "昨日收盤價";
+            dgv_StockList.Columns["Open"].HeaderText = "今日開盤價";
+            dgv_StockList.Columns["MatchTime"].HeaderText = "即時成交時間";
+            dgv_StockList.Columns["MatchPrice"].HeaderText = "即時成交價";
+            dgv_StockList.Columns["MatchQty"].HeaderText = "即時成交量";
+            dgv_StockList.Columns["TotalQty"].HeaderText = "累積成交量";
+
+            //隱藏不顯示欄位
+            dgv_StockList.Columns["TradeBot"].Visible=false;
+
+            //設定下拉選單預設值
+            cb_Host.SelectedIndex = 0;
+            cb_BuyMode.SelectedIndex = 0;
+            cb_StopLossMode.SelectedIndex = 0;
+            cb_LockGainMode.SelectedIndex = 0;
+
+            //初始化成交明細下載目錄
+            this.DownloadTarget = Path.Combine( Directory.GetCurrentDirectory(),DateTime.Now.ToString("yyyyMMdd"));
+            //建立目錄
+            if (!Directory.Exists(this.DownloadTarget))
+            {
+                Directory.CreateDirectory(this.DownloadTarget);
+            }
+            Console.WriteLine(DownloadTarget);
+
+
         }
         #region API 事件處理
         private void OnQuoteGetStatus(object sender, COM_STATUS staus, byte[] msg)
@@ -164,14 +225,20 @@ namespace DayTradeKGIWinForm
 
                     if (pi31001.Status == 0)
                     {
-                        var newLine = string.Format("{0},{1},{2},{3},{4},{5}", pi31001.StockNo, pi31001.Match_Time, pi31001.Match_Price, pi31001.Match_Qty, pi31001.Total_Qty, "<試撮>");
-                        AddInfo(newLine);
+                        //var newLine = string.Format("{0},{1},{2},{3},{4},{5}", pi31001.StockNo, pi31001.Match_Time, pi31001.Match_Price, pi31001.Match_Qty, pi31001.Total_Qty, "<試撮>");
+                        //AddInfo(newLine);
                     }
                     else
                     {
                         var newLine = string.Format("{0},{1},{2},{3},{4}", pi31001.StockNo, pi31001.Match_Time, pi31001.Match_Price, pi31001.Match_Qty, pi31001.Total_Qty);
-                        AddInfo(newLine);
+                        //是否輸出到log視窗
+                        //AddInfo(newLine);
+                        //紀錄成交明細至檔案
                         String filename = string.Format("{0}_{1}_{2}.csv", "MATCH", pi31001.StockNo, DateTime.Now.ToString("yyyyMMdd"));
+                        WriteToCSV(filename, newLine);
+                        //更新GridView成交明細
+                        UpdateGridViewMatchPrice(pi31001);
+
 
                     }
 
@@ -194,18 +261,18 @@ namespace DayTradeKGIWinForm
                     //AddInfo(sb.ToString());
                     if (pi31002.Status == 0)
                     {
-                        StringBuilder buy_price = new StringBuilder();
-                        StringBuilder buy_qty = new StringBuilder();
-                        StringBuilder sell_price = new StringBuilder();
-                        StringBuilder sell_qty = new StringBuilder();
-                        for (int i = 0; i < 5; i++)
-                        {
-                            buy_price.Append(pi31002.BUY_DEPTH[i].PRICE).Append("_");
-                            buy_qty.Append(pi31002.BUY_DEPTH[i].QUANTITY).Append("_");
-                            sell_price.Append(pi31002.SELL_DEPTH[i].PRICE).Append("_");
-                            sell_qty.Append(pi31002.SELL_DEPTH[i].QUANTITY).Append("_");
-                        }
-                        var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", pi31002.StockNo, pi31002.Match_Time, buy_price.ToString(), buy_qty.ToString(), sell_price.ToString(), sell_qty.ToString(), "<試撮>");
+                        //StringBuilder buy_price = new StringBuilder();
+                        //StringBuilder buy_qty = new StringBuilder();
+                        //StringBuilder sell_price = new StringBuilder();
+                        //StringBuilder sell_qty = new StringBuilder();
+                        //for (int i = 0; i < 5; i++)
+                        //{
+                        //    buy_price.Append(pi31002.BUY_DEPTH[i].PRICE).Append("_");
+                        //    buy_qty.Append(pi31002.BUY_DEPTH[i].QUANTITY).Append("_");
+                        //    sell_price.Append(pi31002.SELL_DEPTH[i].PRICE).Append("_");
+                        //    sell_qty.Append(pi31002.SELL_DEPTH[i].QUANTITY).Append("_");
+                        //}
+                        //var newLine = string.Format("{0},{1},{2},{3},{4},{5},{6}", pi31002.StockNo, pi31002.Match_Time, buy_price.ToString(), buy_qty.ToString(), sell_price.ToString(), sell_qty.ToString(), "<試撮>");
                         //AddInfo(newLine);
                     }
                     else
@@ -224,7 +291,7 @@ namespace DayTradeKGIWinForm
                         var newLine = string.Format("{0},{1},{2},{3},{4},{5}", pi31002.StockNo, pi31002.Match_Time, buy_price.ToString(), buy_qty.ToString(), sell_price.ToString(), sell_qty.ToString());
                         //AddInfo(newLine);
                         String filename = string.Format("{0}_{1}_{2}.csv", "DEPTH", pi31002.StockNo, DateTime.Now.ToString("yyyyMMdd"));
-
+                        WriteToCSV(filename, newLine);
                     }
                     break;
                 case (ushort)DT.QUOTE_LAST_PRICE_STOCK:
@@ -477,11 +544,41 @@ namespace DayTradeKGIWinForm
                 catch { };
             }
         }
-
-        private void ShowChanges(object sender, TradeStatus tradestatus, string msg)
+        private void WriteToCSV(String filename, String msg)
         {
-            AddInfo("Status:" + tradestatus + Environment.NewLine + "Message:" + msg);
-            Console.WriteLine("Message:" + msg);
+            string combined = Path.Combine(this.DownloadTarget, filename);
+            using (StreamWriter w = File.AppendText(combined))
+            {
+                w.WriteLine(msg);
+            }
+        }
+
+        private void UpdateGridViewMatchPrice(PI31001 pi31001) {
+            DataRow StockRow = StockTable.Rows.Find(pi31001.StockNo);
+            if (StockRow != null)
+            {
+                StockRow["MatchTime"] = pi31001.Match_Time;
+                StockRow["MatchPrice"] = pi31001.Match_Price;
+                StockRow["MatchQty"] = pi31001.Match_Qty;
+                StockRow["TotalQty"] = pi31001.Total_Qty;
+                if (pi31001.Match_Qty== pi31001.Total_Qty)
+                    StockRow["Open"] = pi31001.Match_Price;
+            }
+            else
+            {
+                //MessageBox.Show("A row with the primary key of " + pi31001.StockNo + " could not be found");
+            }
+        }
+        private void TradeBotStatusChanges(object sender, TradeStatus tradestatus, string msg)
+        {
+            TradeBotBase tb = (TradeBotBase)sender;
+            DataRow StockRow = StockTable.Rows.Find(tb.stockid);
+            if (StockRow != null)
+            {
+                StockRow["Status"] = tradestatus;
+            }
+                AddInfo("Status:" + tradestatus + Environment.NewLine + "Message:" + msg);
+            //Console.WriteLine("Message:" + msg);
         }
         private void btn_Login_Click(object sender, EventArgs e)
         {
@@ -505,13 +602,74 @@ namespace DayTradeKGIWinForm
             ushort buyqty = (ushort)nud_BuyQty.Value;
             double stoplossratio = (double)nud_stoplossratio.Value;
             double lockgainprice = (double)nud_LockGainPrice.Value;
-            quotecom.SubQuotesDepth("6223");
-            quotecom.SubQuotesMatch("6223");
+            DataRow row = StockTable.NewRow();
+            row["StockID"] = stockid;
+            row["Qty"] = buyqty;
 
+            quotecom.SubQuotesDepth(stockid);
+            quotecom.SubQuotesMatch(stockid);
             
             TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, stoplossratio, lockgainprice);
-            tb.StatusChange += ShowChanges;
+            tb.StatusChange += TradeBotStatusChanges;
             tb.Start();
+            row["Status"] = tb.trade_status;
+            row["ClosePrice"] = tb.ClosePrice;
+            row["AH"] = tb.CDP_AH;
+            row["NH"] = tb.CDP_NH;
+            row["NL"] = tb.CDP_NL;
+            row["AL"] = tb.CDP_AL;
+            row["TradeBot"] = tb;
+
+            StockTable.Rows.Add(row);
+        }
+
+        private void dgv_StockList_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                ContextMenu ctxmenu = new ContextMenu();
+                if (e.RowIndex >= 0)
+                {
+                    String stockid = dgv_StockList.Rows[e.RowIndex].Cells[0].Value.ToString();
+                    ctxmenu.MenuItems.Add(new MenuItem(stockid));
+                    ctxmenu.MenuItems.Add(new MenuItem("買進",new EventHandler((menuitem,eventArgs) => {
+                        DataRow row = StockTable.Rows.Find(stockid);
+                        TradeStatus ts = (TradeStatus)row["Status"];
+                        if (ts == TradeStatus.WaitingBuy || ts == TradeStatus.WaitingBuySignal)
+                        {
+                            TradeBotBase tb = (TradeBotBase)row["TradeBot"];
+                            tb.BuyStock();
+                        }
+                        else {
+                            MessageBox.Show("目前狀態無法買進");
+                        }
+                        
+                    })));
+                    ctxmenu.MenuItems.Add(new MenuItem("賣出", new EventHandler((menuitem, eventArgs) => {
+                        DataRow row = StockTable.Rows.Find(stockid);
+                        TradeStatus ts = (TradeStatus)row["Status"];
+                        if (ts == TradeStatus.WaitingSell || ts == TradeStatus.WaitingSellSignal)
+                        {
+                            TradeBotBase tb = (TradeBotBase)row["TradeBot"];
+                            tb.SellStock();
+                        }
+                        else {
+                            MessageBox.Show("目前狀態無法賣出");
+                        }
+                            
+                    })));
+                    ctxmenu.MenuItems.Add(new MenuItem("開啟五檔明細"));
+                    ctxmenu.MenuItems.Add(new MenuItem("暫停"));
+                    ctxmenu.MenuItems.Add(new MenuItem("刪除"));
+                    ctxmenu.Show(this, dgv_StockList.PointToClient(Cursor.Position));
+                }
+                
+            }
+        }
+
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
+        {
+
         }
     }
 }
