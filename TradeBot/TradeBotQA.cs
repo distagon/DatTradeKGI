@@ -12,11 +12,9 @@ namespace TradeBot
    public class TradeBotQA : TradeBotBase
     {
         
-        public TradeBotQA(string stockid, string brokerid, string account, ushort BuyQty, QuoteCom quotecom, TaiFexCom taifexcom, double stoplossratio,double lockgainprice) : base(stockid, brokerid, account, BuyQty, quotecom, taifexcom, stoplossratio,lockgainprice)
+        public TradeBotQA(string stockid, string brokerid, string account, ushort BuyQty, QuoteCom quotecom, TaiFexCom taifexcom, double stoplossratio,double lockgainprice, int amountthreshold, BuyMode buymode, StopLossMode stoplossmode, LockGainMode lockgainmode) : base(stockid, brokerid, account, BuyQty, quotecom, taifexcom, stoplossratio,lockgainprice,amountthreshold,buymode,stoplossmode,lockgainmode)
         {
-            buy_mode = BuyMode.Auto;
-            stoplossmode = StopLossMode.Manual;
-            lockgainmode = LockGainMode.Manual;
+            
         }
         protected override Boolean BuySignal(PI31001 pi31001)
         {

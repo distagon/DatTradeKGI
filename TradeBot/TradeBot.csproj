@@ -102,15 +102,18 @@
   <ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TradeBot.cs" />
-    <Compile Include="TradeBotBase.cs" />
-    <Compile Include="TradeBotQA.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Connected Services\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TradeBotClass\TradeBotClass.csproj">
+      <Project>{369d392f-e7b0-4bf3-985b-e97683fd19d0}</Project>
+      <Name>TradeBotClass</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

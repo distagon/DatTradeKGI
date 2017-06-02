@@ -577,7 +577,7 @@ namespace TradeBot
             {
                 StockRow["Status"] = tradestatus;
             }
-                AddInfo("Status:" + tradestatus + Environment.NewLine + "Message:" + msg);
+                AddInfo("Status:" + tradestatus + ", Message:" + msg);
             //Console.WriteLine("Message:" + msg);
         }
         private void btn_Login_Click(object sender, EventArgs e)
@@ -600,8 +600,12 @@ namespace TradeBot
         {
             string stockid = tb_StockID.Text;
             ushort buyqty = (ushort)nud_BuyQty.Value;
-            double stoplossratio = (double)nud_stoplossratio.Value;
-            double lockgainprice = (double)nud_LockGainPrice.Value;
+            decimal stoplossratio = (decimal)nud_stoplossratio.Value;
+            decimal lockgainprice = (decimal)nud_LockGainPrice.Value;
+            int AmountThreshold = (Int32)nud_AmountThreshold.Value;
+            BuyMode buymode = cb_BuyMode.SelectedIndex == 0 ? BuyMode.Auto : BuyMode.Notify;
+            StopLossMode stoplossmode = cb_StopLossMode.SelectedIndex == 0 ? StopLossMode.Auto : StopLossMode.Manual;
+            LockGainMode lockgainmode = cb_LockGainMode.SelectedIndex == 0 ? LockGainMode.Auto : LockGainMode.Manual; 
             DataRow row = StockTable.NewRow();
             row["StockID"] = stockid;
             row["Qty"] = buyqty;
@@ -609,7 +613,7 @@ namespace TradeBot
             quotecom.SubQuotesDepth(stockid);
             quotecom.SubQuotesMatch(stockid);
             
-            TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, stoplossratio, lockgainprice);
+            TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, stoplossratio, lockgainprice, AmountThreshold,buymode,stoplossmode,lockgainmode);
             tb.StatusChange += TradeBotStatusChanges;
             tb.Start();
             row["Status"] = tb.trade_status;
@@ -667,9 +671,10 @@ namespace TradeBot
             }
         }
 
-        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
-        {
 
+        private void Form_Main_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Environment.Exit(0);
         }
     }
 }
