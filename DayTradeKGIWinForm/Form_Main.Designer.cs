@@ -45,6 +45,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.cb_Host = new System.Windows.Forms.ComboBox();
             this.groupBox_AddStock = new System.Windows.Forms.GroupBox();
+            this.nud_AmountThreshold = new System.Windows.Forms.NumericUpDown();
+            this.label14 = new System.Windows.Forms.Label();
             this.btn_AddStock = new System.Windows.Forms.Button();
             this.cb_LockGainMode = new System.Windows.Forms.ComboBox();
             this.label13 = new System.Windows.Forms.Label();
@@ -61,16 +63,14 @@
             this.tb_StockID = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.dgv_StockList = new System.Windows.Forms.DataGridView();
-            this.label14 = new System.Windows.Forms.Label();
-            this.nud_AmountThreshold = new System.Windows.Forms.NumericUpDown();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox_Login.SuspendLayout();
             this.groupBox_AddStock.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_stoplossratio)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_LockGainPrice)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_BuyQty)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_StockList)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).BeginInit();
             this.SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -283,6 +283,43 @@
             this.groupBox_AddStock.TabStop = false;
             this.groupBox_AddStock.Text = "新增股票";
             // 
+            // nud_AmountThreshold
+            // 
+            this.nud_AmountThreshold.Increment = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.nud_AmountThreshold.Location = new System.Drawing.Point(157, 31);
+            this.nud_AmountThreshold.Maximum = new decimal(new int[] {
+            1000,
+            0,
+            0,
+            0});
+            this.nud_AmountThreshold.Minimum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.nud_AmountThreshold.Name = "nud_AmountThreshold";
+            this.nud_AmountThreshold.Size = new System.Drawing.Size(65, 22);
+            this.nud_AmountThreshold.TabIndex = 19;
+            this.nud_AmountThreshold.Value = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(137, 15);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(113, 12);
+            this.label14.TabIndex = 18;
+            this.label14.Text = "前五分鐘成交量門檻";
+            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // btn_AddStock
             // 
             this.btn_AddStock.Location = new System.Drawing.Point(411, 57);
@@ -362,12 +399,13 @@
             // nud_stoplossratio
             // 
             this.nud_stoplossratio.DecimalPlaces = 1;
+            this.nud_stoplossratio.Enabled = false;
             this.nud_stoplossratio.Increment = new decimal(new int[] {
             1,
             0,
             0,
             65536});
-            this.nud_stoplossratio.Location = new System.Drawing.Point(209, 30);
+            this.nud_stoplossratio.Location = new System.Drawing.Point(446, 30);
             this.nud_stoplossratio.Maximum = new decimal(new int[] {
             10,
             0,
@@ -386,16 +424,18 @@
             0,
             0,
             0});
+            this.nud_stoplossratio.Visible = false;
             // 
             // nud_LockGainPrice
             // 
             this.nud_LockGainPrice.DecimalPlaces = 2;
+            this.nud_LockGainPrice.Enabled = false;
             this.nud_LockGainPrice.Increment = new decimal(new int[] {
             5,
             0,
             0,
             65536});
-            this.nud_LockGainPrice.Location = new System.Drawing.Point(136, 30);
+            this.nud_LockGainPrice.Location = new System.Drawing.Point(373, 30);
             this.nud_LockGainPrice.Maximum = new decimal(new int[] {
             500,
             0,
@@ -414,6 +454,7 @@
             0,
             0,
             0});
+            this.nud_LockGainPrice.Visible = false;
             // 
             // nud_BuyQty
             // 
@@ -440,22 +481,26 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(207, 15);
+            this.label10.Enabled = false;
+            this.label10.Location = new System.Drawing.Point(444, 15);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(65, 12);
             this.label10.TabIndex = 6;
             this.label10.Text = "停損百分比";
             this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label10.Visible = false;
             // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(146, 15);
+            this.label9.Enabled = false;
+            this.label9.Location = new System.Drawing.Point(383, 15);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(41, 12);
             this.label9.TabIndex = 4;
             this.label9.Text = "停利價";
             this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.label9.Visible = false;
             // 
             // label8
             // 
@@ -492,53 +537,21 @@
             this.dgv_StockList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.tableLayoutPanel1.SetColumnSpan(this.dgv_StockList, 2);
             this.dgv_StockList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgv_StockList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgv_StockList.Location = new System.Drawing.Point(3, 113);
             this.dgv_StockList.MultiSelect = false;
             this.dgv_StockList.Name = "dgv_StockList";
-            this.dgv_StockList.ReadOnly = true;
             this.dgv_StockList.RowHeadersVisible = false;
             this.dgv_StockList.RowTemplate.Height = 24;
             this.dgv_StockList.Size = new System.Drawing.Size(914, 259);
             this.dgv_StockList.TabIndex = 3;
             this.dgv_StockList.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgv_StockList_CellMouseDown);
-            // 
-            // label14
-            // 
-            this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(294, 15);
-            this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(89, 12);
-            this.label14.TabIndex = 18;
-            this.label14.Text = "前五分鐘買入量";
-            this.label14.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // nud_AmountThreshold
-            // 
-            this.nud_AmountThreshold.Location = new System.Drawing.Point(314, 31);
-            this.nud_AmountThreshold.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.nud_AmountThreshold.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.nud_AmountThreshold.Name = "nud_AmountThreshold";
-            this.nud_AmountThreshold.Size = new System.Drawing.Size(55, 22);
-            this.nud_AmountThreshold.TabIndex = 19;
-            this.nud_AmountThreshold.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.dgv_StockList.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgv_StockList_DataError);
             // 
             // Form_Main
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.ClientSize = new System.Drawing.Size(920, 442);
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "Form_Main";
@@ -550,11 +563,11 @@
             this.groupBox_Login.PerformLayout();
             this.groupBox_AddStock.ResumeLayout(false);
             this.groupBox_AddStock.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_stoplossratio)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_LockGainPrice)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_BuyQty)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_StockList)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
