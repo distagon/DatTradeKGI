@@ -57,33 +57,37 @@ namespace TradeBot
     }
 
     public delegate void StatusChangeEventHandler(object sender, TradeStatus status, string msg);
+    public delegate void FieldValueChangeEventHandler(object sender, String FieldName, object value);
 
-    public abstract class  TradeBotBase
+    public abstract class TradeBotBase
     {
         public event StatusChangeEventHandler StatusChange;
-        private Intelligence.QuoteCom quotecom; //接收證券行情物件
-        private Smart.TaiFexCom taifexcom;// 券證下單物件
+        public event FieldValueChangeEventHandler FieldValueChange;
+        protected Intelligence.QuoteCom quotecom; //接收證券行情物件
+        protected Smart.TaiFexCom taifexcom;// 券證下單物件
         public TradeStatus trade_status; //交易現況
         public String stockid; //股票代號
-        private String brokerid; //分行
-        private String account;  //帳號
-        private decimal currentBuyMatchPrice = 0.0m; //買入成交金額平均
-        private decimal currentSellMatchPrice = 0.0m; //賣出成交金額平均
+        protected String brokerid; //分行
+        protected String account;  //帳號
+        protected decimal currentBuyMatchPrice = 0.0m; //買入成交金額平均
+        protected decimal currentSellMatchPrice = 0.0m; //賣出成交金額平均
         public ushort BuyQty; //買進量
         public ushort SellQty; //賣出量
-        private long BuyRequestId; //下單封包序號
-        private string CNT; //電子單號
-        private ushort DealCheck = 0; //成交筆數檢查
+        protected long BuyRequestId; //下單封包序號
+        protected string CNT; //電子單號
+        protected ushort DealCheck = 0; //成交筆數檢查
         public BuyMode buy_mode = BuyMode.Notify; //買入模式
         public StopLossMode stoplossmode = StopLossMode.Manual; //停損模式
         public LockGainMode lockgainmode = LockGainMode.Manual; //停利模式
-        private List<DealRpt> DealList = new List<DealRpt>(); //成交回報暫存，因為成交可能不會全部一次回報完成
-        protected decimal StopLossRatio = 0.0m; //停損百分比
-        protected decimal LockGainPrice = 0.0m; //停利目標價
+        protected List<DealRpt> DealList = new List<DealRpt>(); //成交回報暫存，因為成交可能不會全部一次回報完成
+        //protected decimal StopLossRatio = 0.0m; //停損百分比
+        //protected decimal LockGainPrice = 0.0m; //停利目標價
         public int AmountThreshold = 0; //第5分鐘該股成交量必須達多少才準備買進
         //CDP
-        public decimal OpenPrice; //今日開盤價
-        public decimal ClosePrice; //昨日收盤價
+        public decimal OpenPrice = 0.0m; //今日開盤價
+        public decimal ClosePrice = 0.0m; //昨日收盤價
+        public decimal RaiseStopPrice = 0.0m; //今日漲停價
+        public decimal FallStopPrice = 0.0m;  //今日跌停價
         public decimal CDP_AH, CDP_NH, CDP_NL, CDP_AL;
 
         //成交明細與五檔暫存
@@ -103,11 +107,11 @@ namespace TradeBot
 
         //賣出偵測是否突破成本價
         protected Boolean ExceedCost = false;
-        
+
         //綠單次數紀錄
         protected int GreenMatchCount;
 
-        public TradeBotBase(String stockid, string brokerid, string account, ushort BuyQty, Intelligence.QuoteCom quotecom, Smart.TaiFexCom taifexcom, decimal stoplossratio, decimal lockgainprice,int amountthreshold,BuyMode buymode,StopLossMode stoplossmode,LockGainMode lockgainmode)
+        public TradeBotBase(String stockid, string brokerid, string account, ushort BuyQty, Intelligence.QuoteCom quotecom, Smart.TaiFexCom taifexcom, int amountthreshold, BuyMode buymode, StopLossMode stoplossmode, LockGainMode lockgainmode)
         {
             this.stockid = stockid;
             this.quotecom = quotecom;
@@ -115,13 +119,13 @@ namespace TradeBot
             this.brokerid = brokerid;
             this.account = account;
             this.BuyQty = BuyQty;
-            this.StopLossRatio = stoplossratio;
-            this.LockGainPrice = lockgainprice;
+            //this.StopLossRatio = stoplossratio;
+            //this.LockGainPrice = lockgainprice;
             this.AmountThreshold = amountthreshold;
             this.buy_mode = buymode;
             this.stoplossmode = stoplossmode;
             this.lockgainmode = lockgainmode;
-            
+
 
         }
 
@@ -132,22 +136,27 @@ namespace TradeBot
             //清空資料
 
             //連sqlite 讀CDP
-            if (!getCDP())
+            if (!getStockInfo())
             {
                 this.trade_status = TradeStatus.Error;
-                OnStatusChange(this.trade_status, stockid + ":CDP讀取錯誤");
+                OnStatusChange(this.trade_status, stockid + ":股價資料讀取錯誤");
             }
             else {
+                //如果開始偵測時間已超過9點，則須去主機下載今日開般價
+                int CurrentTime = Convert.ToInt32(DateTime.Now.ToString("HHmmss"));
+                if (CurrentTime > 90000)
+                    GetOpenPrice(stockid);
+
                 quotecom.OnRcvMessage += WaitingBuy;
                 this.trade_status = TradeStatus.WaitingBuySignal;
                 OnStatusChange(this.trade_status, stockid + ":等待買入訊號");
             }
-            
+
         }
         protected void BreakTrade(string msg) {
             quotecom.OnRcvMessage -= WaitingBuy;
             this.trade_status = TradeStatus.Stop;
-            OnStatusChange(this.trade_status, stockid + ":條件不符，中止買入偵測:"+msg);
+            OnStatusChange(this.trade_status, stockid + ":條件不符，中止買入偵測:" + msg);
         }
 
         public virtual void BuyStock()
@@ -165,10 +174,133 @@ namespace TradeBot
                 OnStatusChange(this.trade_status, stockid + ":狀態不符，無法買入");
             }
 
-            
+
         }
 
-        private Boolean getCDP() {
+        public virtual void SellStock()
+        {
+            if (this.trade_status == TradeStatus.WaitingSell || this.trade_status == TradeStatus.WaitingSellSignal)
+            {
+                BuyRequestId = taifexcom.GetRequestId();
+                taifexcom.SecurityOrder(BuyRequestId, Security_OrdType.OT_NEW, Security_Lot.Even_Lot, Security_Class.SC_Ordinary, brokerid, account, stockid, SIDE_FLAG.SF_SELL, BuyQty, 0.0m, Security_PriceFlag.SP_FallStopPrice, "", "", "");
+                this.trade_status = TradeStatus.ConfirmSellOrder;
+                quotecom.OnRcvMessage -= WaitingSell;
+                taifexcom.OnRcvMessage += ConfirmOrder;
+                OnStatusChange(this.trade_status, stockid + ":下單賣出");
+            }
+            else
+            {
+                OnStatusChange(this.trade_status, stockid + ":狀態不符，無法賣出");
+            }
+
+        }
+
+        public void GetOpenPrice(String idlist)
+        {
+            quotecom.OnRcvMessage += UpdateOpenPrice;
+            short istatus = quotecom.RetriveLastPriceStock(idlist);
+            if (istatus < 0)
+                OnStatusChange(this.trade_status, stockid + ":" + quotecom.GetSubQuoteMsg(istatus));
+        }
+
+        public void UpdateOpenPrice(object sender, PackageBase package) {
+            if (package.DT == (ushort)DT.QUOTE_LAST_PRICE_STOCK) {
+                PI30026 pi30026 = (PI30026)package;
+                if (pi30026.StockNo == this.stockid) {
+                    OpenPrice = pi30026.FirstMatchPrice;
+                    OnFieldValueChange("OpenPrice", OpenPrice);
+                }
+            }
+        }
+
+        protected decimal CalRaiseStopPrice(decimal closeprice) {
+
+            decimal raisestopprice = closeprice * 1.1m;
+            if (closeprice < 10)
+            {
+                return Math.Floor(raisestopprice * 100m) / 100m;
+            }
+            else if (closeprice >= 10 && closeprice < 50)
+            {
+
+                if (Math.Floor(raisestopprice * 100m) % 10 >= 5)
+                    return (Math.Floor(raisestopprice * 10m) / 10m) + 0.05m;
+                else
+                    return Math.Floor(raisestopprice * 10m) / 10m;
+                
+            }
+            else if (closeprice >= 50 && closeprice < 100)
+            {
+                return Math.Floor(raisestopprice * 10m) / 10m;
+            }
+            else if (closeprice >= 100 && closeprice < 500)
+            {
+                if (Math.Floor(raisestopprice * 10m) % 10 >= 5)
+                    return Math.Floor(raisestopprice) + 0.5m;
+                else
+                    return Math.Floor(raisestopprice);
+            }
+            else if (closeprice >= 500 && closeprice < 1000)
+            {
+                return Math.Floor(raisestopprice);
+            }
+            else
+            {
+                if (Math.Floor(raisestopprice) % 10 >= 5)
+                    return Math.Floor(raisestopprice / 10m) * 10m + 5.0m;
+                else
+                    return Math.Floor(raisestopprice / 10m) * 10m;
+            }
+        }
+
+        protected decimal CalFallStopPrice(decimal closeprice)
+        {
+            decimal fallstopprice = closeprice * 0.9m;
+            if (closeprice < 10)
+            {
+                return Math.Ceiling(fallstopprice * 100m) / 100m;
+            }
+            else if (closeprice >= 10 && closeprice < 50)
+            {
+                decimal modevalue = Math.Ceiling(fallstopprice * 100m) % 10;
+                if (modevalue > 5)
+                    return (Math.Floor(fallstopprice * 10m) / 10m) + 0.1m;
+                else if (modevalue < 5 && modevalue > 0)
+                    return (Math.Floor(fallstopprice * 10m) / 10m) + 0.05m;
+                else
+                    return Math.Ceiling(fallstopprice * 100m) / 100m;
+            }
+            else if (closeprice >= 50 && closeprice < 100)
+            {
+                return Math.Ceiling(fallstopprice * 10m) / 10m;
+            }
+            else if (closeprice >= 100 && closeprice < 500)
+            {
+                decimal modevalue = Math.Ceiling(fallstopprice * 10m) % 10;
+                if (modevalue > 5)
+                    return Math.Floor(fallstopprice) + 1.0m;
+                else if (modevalue < 5 && modevalue > 0)
+                    return Math.Floor(fallstopprice) + 0.5m;
+                else
+                    return Math.Ceiling(fallstopprice * 10m) / 10m;
+            }
+            else if (closeprice >= 500 && closeprice < 1000)
+            {
+                return Math.Ceiling(fallstopprice);
+            }
+            else
+            {
+                decimal modevalue = Math.Ceiling(fallstopprice) % 10;
+                if (modevalue > 5)
+                    return Math.Floor(fallstopprice / 10m) * 10m + 10m;
+                else if (modevalue < 5 && modevalue > 0)
+                    return Math.Floor(fallstopprice / 10m) * 10m + 5m;
+                else
+                    return Math.Ceiling(fallstopprice);
+            }
+        }
+
+        private Boolean getStockInfo() {
             //DateTime dt = DateTime.Now;
             Boolean cdp_status = false;
             using (SQLiteConnection sqlite_conn = new SQLiteConnection("Data source=stock.db")) {
@@ -187,7 +319,10 @@ namespace TradeBot
                     CDP_NH = Convert.ToDecimal(sqlite_datareader["NH"]);
                     CDP_NL = Convert.ToDecimal(sqlite_datareader["NL"]);
                     CDP_AL = Convert.ToDecimal(sqlite_datareader["AL"]);
-                    
+                    //計算漲跌停價
+                    RaiseStopPrice = CalRaiseStopPrice(ClosePrice);
+                    FallStopPrice = CalFallStopPrice(ClosePrice);
+
                     //Console.WriteLine(ClosePrice);
                     //Console.WriteLine(CDP_AH);
                     //Console.WriteLine(CDP_NH);
@@ -264,6 +399,87 @@ namespace TradeBot
 
             String UpdateType = "";  //是更新成交或五檔明細
             String MatchType = ""; //成交類別，是紅單或綠單 R or G
+            String StockID = ""; //股票代號
+            //讀取成交明細，寫入暫存物件
+            if (package.DT == (ushort)DT.QUOTE_STOCK_MATCH1 || package.DT == (ushort)DT.QUOTE_STOCK_MATCH2)
+            {
+                PI31001 pi31001 = (PI31001)package;
+                if (pi31001.Status != 0)
+                {
+                    if (pi31001.StockNo == this.stockid)
+                    {
+                        StockID = pi31001.StockNo;
+                        UpdateType = "Match";
+                        //取得開盤價
+                        if (pi31001.Match_Qty == pi31001.Total_Qty)
+                            OpenPrice = pi31001.Match_Price;
+
+                        //判斷是紅單或綠單
+                        if (DepthLog.Count >= 1) {
+                            PI31002 depth = (PI31002)DepthLog[0];
+                            if (pi31001.Match_Price <= depth.BUY_DEPTH[0].PRICE)
+                                MatchType = "G";
+                            else
+                                MatchType = "R";
+                        }
+                        //寫入暫存物件
+                        if (MatchLog.Count > 2)
+                        {
+                            MatchLog.RemoveAt(2);
+                            MatchLog.Insert(0, pi31001.Match_Time, pi31001);
+                        }
+                        else
+                            MatchLog.Insert(0, pi31001.Match_Time, pi31001);
+                    }
+                }
+            }
+
+            //讀取五檔明細，寫入暫存物件
+            if (package.DT == (ushort)DT.QUOTE_STOCK_DEPTH1 || package.DT == (ushort)DT.QUOTE_STOCK_DEPTH2)
+            {
+                PI31002 pi31002 = (PI31002)package;
+                if (pi31002.Status != 0)
+                {
+                    if (pi31002.StockNo == this.stockid)
+                    {
+                        StockID = pi31002.StockNo;
+                        UpdateType = "Depth";
+                        if (DepthLog.Count > 2)
+                        {
+                            DepthLog.RemoveAt(2);
+                            DepthLog.Insert(0, pi31002.Match_Time, pi31002);
+                        }
+                        else
+                            DepthLog.Insert(0, pi31002.Match_Time, pi31002);
+                    }
+                }
+            }
+
+            //撰寫買入標準判斷
+            if (StockID==this.stockid && (UpdateType == "Match" || UpdateType == "Depth") && MatchLog.Count>=1 && DepthLog.Count>=1) {
+                if (BuySignal(UpdateType,MatchType) == true)
+                {
+                    if (buy_mode == BuyMode.Auto)
+                    {
+                        BuyStock();
+                    }
+                    else if (buy_mode == BuyMode.Notify)
+                    {
+                        this.trade_status = TradeStatus.WaitingBuy;
+                        //quotecom.OnRcvMessage -= WaitingBuy;
+                        OnStatusChange(this.trade_status, stockid + ":訊號出現可下單");
+                    }
+                }
+            }
+            
+        }
+
+        public virtual void WaitingSell(object sender, PackageBase package)
+        {
+            Console.WriteLine("Sell");
+
+            String UpdateType = "";  //是更新成交或五檔明細
+            String MatchType = ""; //成交類別，是紅單或綠單 R or G
             //讀取成交明細，寫入暫存物件
             if (package.DT == (ushort)DT.QUOTE_STOCK_MATCH1 || package.DT == (ushort)DT.QUOTE_STOCK_MATCH2)
             {
@@ -278,7 +494,8 @@ namespace TradeBot
                             OpenPrice = pi31001.Match_Price;
 
                         //判斷是紅單或綠單
-                        if (DepthLog.Count >= 1) {
+                        if (DepthLog.Count >= 1)
+                        {
                             PI31002 depth = (PI31002)DepthLog[0];
                             if (pi31001.Match_Price <= depth.BUY_DEPTH[0].PRICE)
                                 MatchType = "G";
@@ -317,26 +534,22 @@ namespace TradeBot
                 }
             }
 
-            //撰寫買入標準判斷
-            if (UpdateType == "Match" || UpdateType == "Depth") {
-                if (BuySignal(UpdateType,MatchType) == true)
+            //撰寫停損賣出標準
+            if (UpdateType == "Match" || UpdateType == "Depth")
+            {
+                if (SellSignal(UpdateType, MatchType) == true)
                 {
-                    if (buy_mode == BuyMode.Auto)
-                    {
-                        BuyStock();
-                    }
-                    else if (buy_mode == BuyMode.Notify)
-                    {
-                        this.trade_status = TradeStatus.WaitingBuy;
-                        //quotecom.OnRcvMessage -= WaitingBuy;
-                        OnStatusChange(this.trade_status, stockid + ":訊號出現可下單");
-                    }
+                    //if (stoplossmode == StopLossMode.Auto)
+                        SellStock();
+                    //else
+                    //{
+                    //    this.trade_status = TradeStatus.WaitingSell;
+                        //quotecom.OnRcvMessage -= WaitingSell;
+                    //    OnStatusChange(this.trade_status, stockid + ":已達停損標準可以賣出");
+                    //}
+
                 }
             }
-            
-
-            
-
         }
 
         protected virtual Boolean  BuySignal(String UpdateType,String MatchType) {
@@ -440,99 +653,9 @@ namespace TradeBot
 
         }
 
-        public virtual void SellStock()
-        {
-            if (this.trade_status == TradeStatus.WaitingSell || this.trade_status == TradeStatus.WaitingSellSignal)
-            {
-                BuyRequestId = taifexcom.GetRequestId();
-                taifexcom.SecurityOrder(BuyRequestId, Security_OrdType.OT_NEW, Security_Lot.Even_Lot, Security_Class.SC_Ordinary, brokerid, account, stockid, SIDE_FLAG.SF_SELL, BuyQty, 0.0m, Security_PriceFlag.SP_FallStopPrice, "", "", "");
-                this.trade_status = TradeStatus.ConfirmSellOrder;
-                quotecom.OnRcvMessage -= WaitingSell;
-                taifexcom.OnRcvMessage += ConfirmOrder;
-                OnStatusChange(this.trade_status, stockid + ":下單賣出");
-            }
-            else {
-                OnStatusChange(this.trade_status, stockid + ":狀態不符，無法賣出");
-            }
-            
-        }
+       
 
-        public virtual void WaitingSell(object sender, PackageBase package)
-        {
-            Console.WriteLine("Sell");
-
-            String UpdateType = "";  //是更新成交或五檔明細
-            String MatchType = ""; //成交類別，是紅單或綠單 R or G
-            //讀取成交明細，寫入暫存物件
-            if (package.DT == (ushort)DT.QUOTE_STOCK_MATCH1 || package.DT == (ushort)DT.QUOTE_STOCK_MATCH2)
-            {
-                PI31001 pi31001 = (PI31001)package;
-                if (pi31001.Status != 0)
-                {
-                    if (pi31001.StockNo == this.stockid)
-                    {
-                        UpdateType = "Match";
-                        //取得開盤價
-                        if (pi31001.Match_Qty == pi31001.Total_Qty)
-                            OpenPrice = pi31001.Match_Price;
-
-                        //判斷是紅單或綠單
-                        if (DepthLog.Count >= 1)
-                        {
-                            PI31002 depth = (PI31002)DepthLog[0];
-                            if (pi31001.Match_Price <= depth.BUY_DEPTH[0].PRICE)
-                                MatchType = "G";
-                            else
-                                MatchType = "R";
-                        }
-                        //寫入暫存物件
-                        if (MatchLog.Count > 2)
-                        {
-                            MatchLog.RemoveAt(2);
-                            MatchLog.Insert(0, pi31001.Match_Time, pi31001);
-                        }
-                        else
-                            MatchLog.Insert(0, pi31001.Match_Time, pi31001);
-                    }
-                }
-            }
-
-            //讀取五檔明細，寫入暫存物件
-            if (package.DT == (ushort)DT.QUOTE_STOCK_DEPTH1 || package.DT == (ushort)DT.QUOTE_STOCK_DEPTH2)
-            {
-                PI31002 pi31002 = (PI31002)package;
-                if (pi31002.Status != 0)
-                {
-                    if (pi31002.StockNo == this.stockid)
-                    {
-                        UpdateType = "Depth";
-                        if (DepthLog.Count > 2)
-                        {
-                            DepthLog.RemoveAt(2);
-                            DepthLog.Insert(0, pi31002.Match_Time, pi31002);
-                        }
-                        else
-                            DepthLog.Insert(0, pi31002.Match_Time, pi31002);
-                    }
-                }
-            }
-
-            //撰寫停損賣出標準
-            if (UpdateType == "Match" || UpdateType == "Depth") {
-                if (SellSignal(UpdateType,MatchType) == true)
-                {
-                    if (stoplossmode == StopLossMode.Auto)
-                        SellStock();
-                    else
-                    {
-                        this.trade_status = TradeStatus.WaitingSell;
-                        //quotecom.OnRcvMessage -= WaitingSell;
-                        OnStatusChange(this.trade_status, stockid + ":已達停損標準可以賣出");
-                    }
-
-                }
-            }
-        }
+       
 
         public void ConfirmSellMatch(object sender, PackageBase package)
         {
@@ -563,6 +686,11 @@ namespace TradeBot
         protected void OnStatusChange(TradeStatus status, string msg)
         {
             StatusChange?.Invoke(this, status, msg);
+        }
+
+        protected void OnFieldValueChange(String FieldName, object value)
+        {
+            FieldValueChange?.Invoke(this, FieldName, value);
         }
     }
 

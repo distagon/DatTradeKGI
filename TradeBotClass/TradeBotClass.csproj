@@ -68,6 +68,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TradeBotBase.cs" />
     <Compile Include="TradeBotQA.cs" />
+    <Compile Include="TradeBotTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
