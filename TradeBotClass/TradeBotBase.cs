@@ -125,15 +125,29 @@ namespace TradeBot
             this.buy_mode = buymode;
             this.stoplossmode = stoplossmode;
             this.lockgainmode = lockgainmode;
-
+       
+            this.trade_status = TradeStatus.StandBy;
+            OnStatusChange(this.trade_status, stockid + ":待命中");
 
         }
 
         public decimal CurrentBuyMatchPrice { get => currentBuyMatchPrice; }
 
+        //開始執行
         public void Start()
         {
             //清空資料
+            currentBuyMatchPrice = 0.0m;
+            currentSellMatchPrice = 0.0m;
+            DealCheck = 0;
+            DealList.Clear();
+            MatchLog.Clear();
+            DepthLog.Clear();
+            pi31001_5min = null;
+            pi31002_5min = null;
+            ExceedCDP = false;
+            ExceedCost = false;
+            GreenMatchCount = 0;
 
             //連sqlite 讀CDP
             if (!getStockInfo())
@@ -141,23 +155,43 @@ namespace TradeBot
                 this.trade_status = TradeStatus.Error;
                 OnStatusChange(this.trade_status, stockid + ":股價資料讀取錯誤");
             }
-            else {
+            else
+            {
                 //如果開始偵測時間已超過9點，則須去主機下載今日開般價
                 int CurrentTime = Convert.ToInt32(DateTime.Now.ToString("HHmmss"));
                 if (CurrentTime > 90000)
                     GetOpenPrice(stockid);
-
                 quotecom.OnRcvMessage += WaitingBuy;
                 this.trade_status = TradeStatus.WaitingBuySignal;
                 OnStatusChange(this.trade_status, stockid + ":等待買入訊號");
+
             }
 
+            
+
+            
+
         }
+
+        //手動中止偵測
+        public void Stop() {
+            if (this.trade_status == TradeStatus.WaitingBuy || this.trade_status == TradeStatus.WaitingBuySignal) {
+                quotecom.OnRcvMessage -= WaitingBuy;
+                this.trade_status = TradeStatus.Stop;
+                OnStatusChange(this.trade_status, stockid + ":中止偵測");
+            }
+            
+        }
+
+
+        //等待買入時中止偵測
         protected void BreakTrade(string msg) {
             quotecom.OnRcvMessage -= WaitingBuy;
             this.trade_status = TradeStatus.Stop;
             OnStatusChange(this.trade_status, stockid + ":條件不符，中止買入偵測:" + msg);
         }
+
+
 
         public virtual void BuyStock()
         {
@@ -395,7 +429,7 @@ namespace TradeBot
         public virtual void WaitingBuy(object sender, PackageBase package)
         {
 
-            Console.WriteLine("Buy");
+            //Console.WriteLine("Buy");
 
             String UpdateType = "";  //是更新成交或五檔明細
             String MatchType = ""; //成交類別，是紅單或綠單 R or G
@@ -476,7 +510,7 @@ namespace TradeBot
 
         public virtual void WaitingSell(object sender, PackageBase package)
         {
-            Console.WriteLine("Sell");
+            //Console.WriteLine("Sell");
 
             String UpdateType = "";  //是更新成交或五檔明細
             String MatchType = ""; //成交類別，是紅單或綠單 R or G

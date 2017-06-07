@@ -12,11 +12,13 @@ using Package;
 using Smart;
 using TradeBot;
 using System.IO;
+using System.Threading;
 
 
 namespace TradeBot
 {
     delegate void SetAddInfoCallBack(string text);
+    
     public partial class Form_Main : Form
     {
         public  QuoteCom quotecom;
@@ -39,6 +41,7 @@ namespace TradeBot
         public DataTable StopLossModeTable = new DataTable("StopLossModeList", "TradeBot");
         public DataTable LockGainModeTable = new DataTable("LockGainModeList", "TradeBot");
         private string DownloadTarget = "";
+        private StockEditor stockeditor;
 
 
         public Form_Main()
@@ -56,9 +59,10 @@ namespace TradeBot
             tfcom.OnRcvMessage += OntfcomRcvMessage;          //資料接收事件
             tfcom.OnGetStatus += OntfcomGetStatus;               //狀態通知事件
             tfcom.OnRcvServerTime += OntfcomRcvServerTime;   //接收主機時間
-            //tfcom.OnRecoverStatus += OntfcomRecoverStatus;   //回補狀態通知
+                                                             //tfcom.OnRecoverStatus += OntfcomRecoverStatus;   //回補狀態通知
 
             //初始化表格
+            //StockTable.Columns.Add("SN", typeof(Int32)); //自動增加序號
             DataColumn StockIdCol = StockTable.Columns.Add("StockID", typeof(String)); //股票代號
             StockTable.PrimaryKey = new DataColumn[] { StockIdCol };
             StockTable.Columns.Add("Status", typeof(string)); //目前狀態
@@ -84,6 +88,7 @@ namespace TradeBot
             StockTable.Columns.Add("AL", typeof(double));
             StockTable.Columns.Add("TradeBot", typeof(TradeBotBase));
 
+            
             //建立下拉選單表格
             BuyModeTable.Columns.Add("BuyMode", typeof(string));
             BuyModeTable.Columns.Add("BuyMode_Text", typeof(string));
@@ -123,6 +128,23 @@ namespace TradeBot
             BindingSource bindingLockGainMode = new BindingSource();
             bindingLockGainMode.DataSource = LockGainModeTable;
 
+            //增加啟動與停止欄位
+            DataGridViewButtonColumn StartbuttonColumn =
+            new DataGridViewButtonColumn();
+            StartbuttonColumn.HeaderText = "";
+            StartbuttonColumn.Name = "StartTradeBot";
+            StartbuttonColumn.Text = "啟動";
+            StartbuttonColumn.UseColumnTextForButtonValue = true;
+            dgv_StockList.Columns.Add(StartbuttonColumn);
+
+            DataGridViewButtonColumn StopbuttonColumn =
+            new DataGridViewButtonColumn();
+            StopbuttonColumn.HeaderText = "";
+            StopbuttonColumn.Name = "StopTradeBot";
+            StopbuttonColumn.Text = "停止";
+            StopbuttonColumn.UseColumnTextForButtonValue = true;
+            dgv_StockList.Columns.Add(StopbuttonColumn);
+
             //增加欄位名稱
             dgv_StockList.Columns.Add("StockID", "代號");
             dgv_StockList.Columns["StockID"].DataPropertyName="StockID";
@@ -143,6 +165,9 @@ namespace TradeBot
             dgv_StockList.Columns.Add("AmountThreshold", "成交量門檻");
             dgv_StockList.Columns["AmountThreshold"].DataPropertyName = "AmountThreshold";
             dgv_StockList.Columns["AmountThreshold"].ToolTipText = "前五分鐘成交量門檻";
+            dgv_StockList.Columns["AmountThreshold"].ReadOnly = true;
+
+
 
             DataGridViewComboBoxColumn BuyModeCol = new DataGridViewComboBoxColumn();
             BuyModeCol.ValueMember = "BuyMode";
@@ -151,6 +176,9 @@ namespace TradeBot
             BuyModeCol.Name = "BuyMode";
             BuyModeCol.DataPropertyName = "BuyMode";
             BuyModeCol.HeaderText = "買入模式";
+            BuyModeCol.ReadOnly = true;
+            BuyModeCol.DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing;
+            BuyModeCol.SortMode = DataGridViewColumnSortMode.Automatic;
             dgv_StockList.Columns.Add(BuyModeCol);
 
             DataGridViewComboBoxColumn StopLossModeCol = new DataGridViewComboBoxColumn();
@@ -160,6 +188,9 @@ namespace TradeBot
             StopLossModeCol.Name = "StopLossMode";
             StopLossModeCol.DataPropertyName = "StopLossMode";
             StopLossModeCol.HeaderText = "停損模式";
+            StopLossModeCol.ReadOnly = true;
+            StopLossModeCol.DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing;
+            StopLossModeCol.SortMode = DataGridViewColumnSortMode.Automatic;
             dgv_StockList.Columns.Add(StopLossModeCol);
 
             DataGridViewComboBoxColumn LockGainModeCol = new DataGridViewComboBoxColumn();
@@ -169,16 +200,20 @@ namespace TradeBot
             LockGainModeCol.Name = "LockGainMode";
             LockGainModeCol.DataPropertyName = "LockGainMode";
             LockGainModeCol.HeaderText = "停利模式";
+            LockGainModeCol.ReadOnly = true;
+            LockGainModeCol.DisplayStyle = DataGridViewComboBoxDisplayStyle.Nothing;
+            LockGainModeCol.SortMode = DataGridViewColumnSortMode.Automatic;
             dgv_StockList.Columns.Add(LockGainModeCol);
 
             //DataGridViewComboBoxColumn BuyQtyCol = new DataGridViewComboBoxColumn();
-            //BuyQtyCol.Items.AddRange(1,2,3,4,5,6,7,8,9,10);
+            //BuyQtyCol.Items.AddRange(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
             //BuyQtyCol.Name = "BuyQty";
             //BuyQtyCol.DataPropertyName = "BuyQty";
             //BuyQtyCol.HeaderText = "設定買量";
             //dgv_StockList.Columns.Add(BuyQtyCol);
             dgv_StockList.Columns.Add("BuyQty", "設定買量");
             dgv_StockList.Columns["BuyQty"].DataPropertyName = "BuyQty";
+            dgv_StockList.Columns["BuyQty"].ReadOnly = true;
 
             dgv_StockList.Columns.Add("BuyAvgPrice", "買入平均成本");
             dgv_StockList.Columns["BuyAvgPrice"].DataPropertyName = "BuyAvgPrice";
@@ -228,19 +263,21 @@ namespace TradeBot
             bs.DataSource = StockTable;
             dgv_StockList.DataSource = bs;
 
+
+
             ////隱藏不顯示欄位
             dgv_StockList.Columns["TradeBot"].Visible=false;
 
             ////設定欄位凍結
-            dgv_StockList.Columns["StockID"].Frozen = true;
-            dgv_StockList.Columns["Status"].Frozen = true;
-            dgv_StockList.Columns["AmountThreshold"].Frozen = true;
-            dgv_StockList.Columns["BuyMode"].Frozen = true;
-            dgv_StockList.Columns["StopLossMode"].Frozen = true;
-            dgv_StockList.Columns["LockGainMode"].Frozen = true;
+            //dgv_StockList.Columns["StockID"].Frozen = true;
+            //dgv_StockList.Columns["Status"].Frozen = true;
+            //dgv_StockList.Columns["AmountThreshold"].Frozen = true;
+            //dgv_StockList.Columns["BuyMode"].Frozen = true;
+            //dgv_StockList.Columns["StopLossMode"].Frozen = true;
+            //dgv_StockList.Columns["LockGainMode"].Frozen = true;
             dgv_StockList.Columns["BuyQty"].Frozen = true;
-
-
+            dgv_StockList.Columns["BuyQty"].DividerWidth = 3;
+            
 
 
             //設定下拉選單預設值
@@ -258,42 +295,121 @@ namespace TradeBot
             }
             Console.WriteLine(DownloadTarget);
 
+            
+        }
 
+        private void dgv_StockList_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+           // if (e.RowIndex < 0 || e.ColumnIndex != dgv_StockList.Columns["StartTradeBot"].Index || e.ColumnIndex != dgv_StockList.Columns["StopTradeBot"].Index) return;
+            if (e.ColumnIndex == dgv_StockList.Columns["StartTradeBot"].Index) {
+                String stockid = dgv_StockList.Rows[e.RowIndex].Cells["StockID"].Value.ToString();
+                DataRow row = StockTable.Rows.Find(stockid);
+                string ts = row["Status"].ToString();
+                if (ts == TradeStatus.StandBy.ToString() || ts == TradeStatus.Error.ToString() || ts == TradeStatus.Stop.ToString())
+                    StartTradeBot(stockid);
+                else
+                    AddInfo(stockid+":已經在執行中");
+            }
+
+            if (e.ColumnIndex == dgv_StockList.Columns["StopTradeBot"].Index)
+            {
+                String stockid = dgv_StockList.Rows[e.RowIndex].Cells["StockID"].Value.ToString();
+                DataRow row = StockTable.Rows.Find(stockid);
+                string ts = row["Status"].ToString();
+                if (ts == TradeStatus.WaitingBuy.ToString() || ts == TradeStatus.WaitingBuySignal.ToString())
+                    StopTradeBot(stockid);
+                else
+                    AddInfo(stockid + ":已經停止或已買入無法停止偵測");
+            }
+        }
+
+        private void StartTradeBot(string stockid) {
+
+            DataRow StockRow = StockTable.Rows.Find(stockid);
+            if (StockRow != null)
+            {
+                quotecom.SubQuotesDepth(stockid);
+                quotecom.SubQuotesMatch(stockid);
+                TradeBotBase tb = (TradeBotBase)StockRow["TradeBot"];
+                tb.Start();
+                StockRow["ClosePrice"] = tb.ClosePrice;
+                StockRow["AH"] = tb.CDP_AH;
+                StockRow["NH"] = tb.CDP_NH;
+                StockRow["NL"] = tb.CDP_NL;
+                StockRow["AL"] = tb.CDP_AL;
+
+            }   
+        }
+
+        private void btn_StartALL_Click(object sender, EventArgs e)
+        {
+            foreach (DataRow row in StockTable.Rows) {
+                string ts = row["Status"].ToString();
+                string stockid= row["StockID"].ToString();
+                if (ts == TradeStatus.StandBy.ToString() || ts == TradeStatus.Error.ToString() || ts == TradeStatus.Stop.ToString())
+                    StartTradeBot(stockid);
+                else
+                    AddInfo(stockid + ":已經在執行中");
+            }
+        }
+
+        private void StopTradeBot(string stockid) {
+            DataRow StockRow = StockTable.Rows.Find(stockid);
+            if (StockRow != null)
+            {
+                quotecom.UnSubQuotesDepth(stockid);                
+                quotecom.UnSubQuotesMatch(stockid);
+                TradeBotBase tb = (TradeBotBase)StockRow["TradeBot"];
+                tb.Stop();
+            }
+        }
+
+        private void btn_StopAll_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show("是否要全部停止", "警告", MessageBoxButtons.YesNo);
+            if (result == DialogResult.Yes) {
+                foreach (DataRow row in StockTable.Rows)
+                {
+                    string ts = row["Status"].ToString();
+                    string stockid = row["StockID"].ToString();
+                    if (ts == TradeStatus.WaitingBuy.ToString() || ts == TradeStatus.WaitingBuySignal.ToString())
+                        StopTradeBot(stockid);
+                    else
+                        AddInfo(stockid + ":已經停止或已買入無法停止偵測");
+                }
+            }
+           
         }
 
         private void btn_AddStock_Click(object sender, EventArgs e)
-        {
+        {           
             string stockid = tb_StockID.Text;
-            ushort buyqty = (ushort)nud_BuyQty.Value;
-            //decimal stoplossratio = (decimal)nud_stoplossratio.Value;
-            //decimal lockgainprice = (decimal)nud_LockGainPrice.Value;
-            int AmountThreshold = (Int32)nud_AmountThreshold.Value;
-            BuyMode buymode = cb_BuyMode.SelectedIndex == 0 ? BuyMode.Auto : BuyMode.Notify;
-            StopLossMode stoplossmode = cb_StopLossMode.SelectedIndex == 0 ? StopLossMode.Auto : StopLossMode.Manual;
-            LockGainMode lockgainmode = cb_LockGainMode.SelectedIndex == 0 ? LockGainMode.Auto : LockGainMode.Manual;
-            DataRow row = StockTable.NewRow();
-            row["StockID"] = stockid;
-            row["AmountThreshold"] = AmountThreshold;
-            row["BuyQty"] = buyqty;
-            row["BuyMode"] = buymode;
-            row["StopLossMode"] = stoplossmode;
-            row["LockGainMode"] = lockgainmode;
-            quotecom.SubQuotesDepth(stockid);
-            quotecom.SubQuotesMatch(stockid);
-
-            TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom,  AmountThreshold, buymode, stoplossmode, lockgainmode);
-            tb.StatusChange += TradeBotStatusChanges;
-            tb.FieldValueChange += TradeBotFieldValueChanges;
-            tb.Start();
-            row["Status"] = tb.trade_status;
-            row["ClosePrice"] = tb.ClosePrice;
-            row["AH"] = tb.CDP_AH;
-            row["NH"] = tb.CDP_NH;
-            row["NL"] = tb.CDP_NL;
-            row["AL"] = tb.CDP_AL;
-            row["TradeBot"] = tb;
-
-            StockTable.Rows.Add(row);
+            if (!StockTable.Rows.Contains(stockid))
+            {
+                ushort buyqty = (ushort)nud_BuyQty.Value;
+                //decimal stoplossratio = (decimal)nud_stoplossratio.Value;
+                //decimal lockgainprice = (decimal)nud_LockGainPrice.Value;
+                int AmountThreshold = (Int32)nud_AmountThreshold.Value;
+                BuyMode buymode = cb_BuyMode.SelectedIndex == 0 ? BuyMode.Auto : BuyMode.Notify;
+                StopLossMode stoplossmode = cb_StopLossMode.SelectedIndex == 0 ? StopLossMode.Auto : StopLossMode.Manual;
+                LockGainMode lockgainmode = cb_LockGainMode.SelectedIndex == 0 ? LockGainMode.Auto : LockGainMode.Manual;
+                DataRow row = StockTable.NewRow();
+                row["StockID"] = stockid;
+                row["AmountThreshold"] = AmountThreshold;
+                row["BuyQty"] = buyqty;
+                row["BuyMode"] = buymode;
+                row["StopLossMode"] = stoplossmode;
+                row["LockGainMode"] = lockgainmode;
+                TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, AmountThreshold, buymode, stoplossmode, lockgainmode);
+                tb.StatusChange += TradeBotStatusChanges;
+                tb.FieldValueChange += TradeBotFieldValueChanges;
+                row["Status"] = tb.trade_status;
+                row["TradeBot"] = tb;
+                StockTable.Rows.Add(row);
+            }
+            else
+                MessageBox.Show("該檔股票已存在");
+            
         }
 
         private void dgv_StockList_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
@@ -303,12 +419,12 @@ namespace TradeBot
                 ContextMenu ctxmenu = new ContextMenu();
                 if (e.RowIndex >= 0)
                 {
-                    String stockid = dgv_StockList.Rows[e.RowIndex].Cells[0].Value.ToString();
+                    String stockid = dgv_StockList.Rows[e.RowIndex].Cells["StockID"].Value.ToString();
                     ctxmenu.MenuItems.Add(new MenuItem(stockid));
                     ctxmenu.MenuItems.Add(new MenuItem("買進", new EventHandler((menuitem, eventArgs) => {
                         DataRow row = StockTable.Rows.Find(stockid);
-                        TradeStatus ts = (TradeStatus)row["Status"];
-                        if (ts == TradeStatus.WaitingBuy || ts == TradeStatus.WaitingBuySignal)
+                        string ts = row["Status"].ToString();
+                        if (ts == TradeStatus.WaitingBuy.ToString() || ts == TradeStatus.WaitingBuySignal.ToString())
                         {
                             TradeBotBase tb = (TradeBotBase)row["TradeBot"];
                             tb.BuyStock();
@@ -321,8 +437,8 @@ namespace TradeBot
                     })));
                     ctxmenu.MenuItems.Add(new MenuItem("賣出", new EventHandler((menuitem, eventArgs) => {
                         DataRow row = StockTable.Rows.Find(stockid);
-                        TradeStatus ts = (TradeStatus)row["Status"];
-                        if (ts == TradeStatus.WaitingSell || ts == TradeStatus.WaitingSellSignal)
+                        string ts = row["Status"].ToString();
+                        if (ts == TradeStatus.WaitingSell.ToString() || ts == TradeStatus.WaitingSellSignal.ToString())
                         {
                             TradeBotBase tb = (TradeBotBase)row["TradeBot"];
                             tb.SellStock();
@@ -335,13 +451,18 @@ namespace TradeBot
                     })));
                     ctxmenu.MenuItems.Add(new MenuItem("開啟五檔明細"));
                     ctxmenu.MenuItems.Add(new MenuItem("暫停"));
-                    ctxmenu.MenuItems.Add(new MenuItem("刪除"));
+                    ctxmenu.MenuItems.Add(new MenuItem("刪除", new EventHandler((menuitem, eventArgs) => {
+                        DataRow row = StockTable.Rows.Find(stockid);
+                       // TradeBotBase tb = (TradeBotBase)row["TradeBot"];
+                       // StockTable.Rows.Remove(row);
+
+                    })));
                     ctxmenu.Show(this, dgv_StockList.PointToClient(Cursor.Position));
                 }
 
             }
         }
-
+        
         #region API 事件處理
         private void OnQuoteGetStatus(object sender, COM_STATUS staus, byte[] msg)
         {
@@ -407,7 +528,12 @@ namespace TradeBot
 
         private  void OnRecoverStatus(object sender, string Topic, RECOVER_STATUS status, uint RecoverCount)
         {
-
+            if (this.InvokeRequired)
+            {
+                Intelligence.OnRecover_EvenHandler d = new Intelligence.OnRecover_EvenHandler(OnRecoverStatus);
+                this.Invoke(d, new object[] { sender, Topic, status, RecoverCount });
+                return;
+            }
             QuoteCom com = (QuoteCom)sender;
             switch (status)
             {
@@ -422,6 +548,13 @@ namespace TradeBot
 
         private  void OnQuoteRcvMessage(object sender, PackageBase package)
         {
+            if (this.InvokeRequired)
+            {
+                Intelligence.OnRcvMessage_EventHandler d = new Intelligence.OnRcvMessage_EventHandler(OnQuoteRcvMessage);
+                this.Invoke(d, new object[] { sender, package });
+                return;
+            }
+
             if (package.TOPIC != null)
                 if (RecoverMap.ContainsKey(package.TOPIC))
                     RecoverMap[package.TOPIC]++;
@@ -671,7 +804,12 @@ namespace TradeBot
 
         private  void OntfcomRcvMessage(object sender, PackageBase package)
         {
-
+            if (this.InvokeRequired)
+            {
+                Smart.OnRcvMessage_EventHandler d = new Smart.OnRcvMessage_EventHandler(OntfcomRcvMessage);
+                this.Invoke(d, new object[] { sender, package });
+                return;
+            }
             StringBuilder sbtmp = new StringBuilder();
             switch ((DT)package.DT)
             {
@@ -742,7 +880,12 @@ namespace TradeBot
 
         private  void OntfcomRecoverStatus(object sender, string Topic, RECOVER_STATUS status, uint RecoverCount)
         {
-
+            if (this.InvokeRequired)
+            {
+                Smart.OnRecover_EvenHandler d = new Smart.OnRecover_EvenHandler(OntfcomRecoverStatus);
+                this.Invoke(d, new object[] { sender, Topic, status, RecoverCount });
+                return;
+            }
             TaiFexCom com = (TaiFexCom)sender;
             switch (status)
             {
@@ -849,8 +992,20 @@ namespace TradeBot
 
         private void dgv_StockList_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
-            AddInfo(e.Exception.Message);
+            Console.WriteLine(e.Exception.Message);
+            Console.WriteLine(e.Exception.StackTrace);
             
+
+        }
+
+        private void btn_ConfigStock_Click(object sender, EventArgs e)
+        {
+
+            //初始化股票設定視窗
+            if(stockeditor==null)
+                stockeditor = new StockEditor(StockTable);
+            if(!stockeditor.Visible)
+                stockeditor.Show();
         }
     }
 }

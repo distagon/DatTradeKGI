@@ -28,6 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tb_Log = new System.Windows.Forms.TextBox();
             this.groupBox_Login = new System.Windows.Forms.GroupBox();
@@ -54,21 +56,18 @@
             this.label12 = new System.Windows.Forms.Label();
             this.cb_BuyMode = new System.Windows.Forms.ComboBox();
             this.label11 = new System.Windows.Forms.Label();
-            this.nud_stoplossratio = new System.Windows.Forms.NumericUpDown();
-            this.nud_LockGainPrice = new System.Windows.Forms.NumericUpDown();
             this.nud_BuyQty = new System.Windows.Forms.NumericUpDown();
-            this.label10 = new System.Windows.Forms.Label();
-            this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.tb_StockID = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.dgv_StockList = new System.Windows.Forms.DataGridView();
+            this.btn_ConfigStock = new System.Windows.Forms.Button();
+            this.btn_StartALL = new System.Windows.Forms.Button();
+            this.btn_StopAll = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox_Login.SuspendLayout();
             this.groupBox_AddStock.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_stoplossratio)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_LockGainPrice)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_BuyQty)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_StockList)).BeginInit();
             this.SuspendLayout();
@@ -90,8 +89,8 @@
             this.tableLayoutPanel1.Name = "tableLayoutPanel1";
             this.tableLayoutPanel1.RowCount = 3;
             this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 25F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 60F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 60.181F));
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 14.93213F));
             this.tableLayoutPanel1.Size = new System.Drawing.Size(920, 442);
             this.tableLayoutPanel1.TabIndex = 0;
             // 
@@ -258,6 +257,9 @@
             // groupBox_AddStock
             // 
             this.groupBox_AddStock.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.groupBox_AddStock.Controls.Add(this.btn_StopAll);
+            this.groupBox_AddStock.Controls.Add(this.btn_StartALL);
+            this.groupBox_AddStock.Controls.Add(this.btn_ConfigStock);
             this.groupBox_AddStock.Controls.Add(this.nud_AmountThreshold);
             this.groupBox_AddStock.Controls.Add(this.label14);
             this.groupBox_AddStock.Controls.Add(this.btn_AddStock);
@@ -267,11 +269,7 @@
             this.groupBox_AddStock.Controls.Add(this.label12);
             this.groupBox_AddStock.Controls.Add(this.cb_BuyMode);
             this.groupBox_AddStock.Controls.Add(this.label11);
-            this.groupBox_AddStock.Controls.Add(this.nud_stoplossratio);
-            this.groupBox_AddStock.Controls.Add(this.nud_LockGainPrice);
             this.groupBox_AddStock.Controls.Add(this.nud_BuyQty);
-            this.groupBox_AddStock.Controls.Add(this.label10);
-            this.groupBox_AddStock.Controls.Add(this.label9);
             this.groupBox_AddStock.Controls.Add(this.label8);
             this.groupBox_AddStock.Controls.Add(this.tb_StockID);
             this.groupBox_AddStock.Controls.Add(this.label7);
@@ -290,7 +288,7 @@
             0,
             0,
             0});
-            this.nud_AmountThreshold.Location = new System.Drawing.Point(157, 31);
+            this.nud_AmountThreshold.Location = new System.Drawing.Point(140, 31);
             this.nud_AmountThreshold.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -313,7 +311,7 @@
             // label14
             // 
             this.label14.AutoSize = true;
-            this.label14.Location = new System.Drawing.Point(137, 15);
+            this.label14.Location = new System.Drawing.Point(119, 15);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(113, 12);
             this.label14.TabIndex = 18;
@@ -322,9 +320,9 @@
             // 
             // btn_AddStock
             // 
-            this.btn_AddStock.Location = new System.Drawing.Point(411, 57);
+            this.btn_AddStock.Location = new System.Drawing.Point(446, 25);
             this.btn_AddStock.Name = "btn_AddStock";
-            this.btn_AddStock.Size = new System.Drawing.Size(75, 23);
+            this.btn_AddStock.Size = new System.Drawing.Size(62, 23);
             this.btn_AddStock.TabIndex = 17;
             this.btn_AddStock.Text = "新增\r\n";
             this.btn_AddStock.UseVisualStyleBackColor = true;
@@ -337,7 +335,7 @@
             this.cb_LockGainMode.Items.AddRange(new object[] {
             "自動",
             "手動"});
-            this.cb_LockGainMode.Location = new System.Drawing.Point(327, 72);
+            this.cb_LockGainMode.Location = new System.Drawing.Point(376, 28);
             this.cb_LockGainMode.Name = "cb_LockGainMode";
             this.cb_LockGainMode.Size = new System.Drawing.Size(64, 20);
             this.cb_LockGainMode.TabIndex = 16;
@@ -345,7 +343,7 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(275, 76);
+            this.label13.Location = new System.Drawing.Point(380, 13);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(53, 12);
             this.label13.TabIndex = 15;
@@ -359,7 +357,7 @@
             this.cb_StopLossMode.Items.AddRange(new object[] {
             "自動",
             "手動"});
-            this.cb_StopLossMode.Location = new System.Drawing.Point(199, 73);
+            this.cb_StopLossMode.Location = new System.Drawing.Point(302, 29);
             this.cb_StopLossMode.Name = "cb_StopLossMode";
             this.cb_StopLossMode.Size = new System.Drawing.Size(68, 20);
             this.cb_StopLossMode.TabIndex = 14;
@@ -367,7 +365,7 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(140, 76);
+            this.label12.Location = new System.Drawing.Point(308, 15);
             this.label12.Name = "label12";
             this.label12.Size = new System.Drawing.Size(53, 12);
             this.label12.TabIndex = 13;
@@ -381,7 +379,7 @@
             this.cb_BuyMode.Items.AddRange(new object[] {
             "自動",
             "手動"});
-            this.cb_BuyMode.Location = new System.Drawing.Point(63, 73);
+            this.cb_BuyMode.Location = new System.Drawing.Point(235, 30);
             this.cb_BuyMode.Name = "cb_BuyMode";
             this.cb_BuyMode.Size = new System.Drawing.Size(61, 20);
             this.cb_BuyMode.TabIndex = 12;
@@ -389,76 +387,16 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(6, 76);
+            this.label11.Location = new System.Drawing.Point(238, 15);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(53, 12);
             this.label11.TabIndex = 11;
             this.label11.Text = "買進模式";
             this.label11.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
-            // nud_stoplossratio
-            // 
-            this.nud_stoplossratio.DecimalPlaces = 1;
-            this.nud_stoplossratio.Enabled = false;
-            this.nud_stoplossratio.Increment = new decimal(new int[] {
-            1,
-            0,
-            0,
-            65536});
-            this.nud_stoplossratio.Location = new System.Drawing.Point(446, 30);
-            this.nud_stoplossratio.Maximum = new decimal(new int[] {
-            10,
-            0,
-            0,
-            0});
-            this.nud_stoplossratio.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.nud_stoplossratio.Name = "nud_stoplossratio";
-            this.nud_stoplossratio.Size = new System.Drawing.Size(54, 22);
-            this.nud_stoplossratio.TabIndex = 10;
-            this.nud_stoplossratio.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.nud_stoplossratio.Visible = false;
-            // 
-            // nud_LockGainPrice
-            // 
-            this.nud_LockGainPrice.DecimalPlaces = 2;
-            this.nud_LockGainPrice.Enabled = false;
-            this.nud_LockGainPrice.Increment = new decimal(new int[] {
-            5,
-            0,
-            0,
-            65536});
-            this.nud_LockGainPrice.Location = new System.Drawing.Point(373, 30);
-            this.nud_LockGainPrice.Maximum = new decimal(new int[] {
-            500,
-            0,
-            0,
-            0});
-            this.nud_LockGainPrice.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.nud_LockGainPrice.Name = "nud_LockGainPrice";
-            this.nud_LockGainPrice.Size = new System.Drawing.Size(63, 22);
-            this.nud_LockGainPrice.TabIndex = 9;
-            this.nud_LockGainPrice.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-            this.nud_LockGainPrice.Visible = false;
-            // 
             // nud_BuyQty
             // 
-            this.nud_BuyQty.Location = new System.Drawing.Point(82, 30);
+            this.nud_BuyQty.Location = new System.Drawing.Point(73, 30);
             this.nud_BuyQty.Maximum = new decimal(new int[] {
             10,
             0,
@@ -478,34 +416,10 @@
             0,
             0});
             // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Enabled = false;
-            this.label10.Location = new System.Drawing.Point(444, 15);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(65, 12);
-            this.label10.TabIndex = 6;
-            this.label10.Text = "停損百分比";
-            this.label10.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label10.Visible = false;
-            // 
-            // label9
-            // 
-            this.label9.AutoSize = true;
-            this.label9.Enabled = false;
-            this.label9.Location = new System.Drawing.Point(383, 15);
-            this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(41, 12);
-            this.label9.TabIndex = 4;
-            this.label9.Text = "停利價";
-            this.label9.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.label9.Visible = false;
-            // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(85, 15);
+            this.label8.Location = new System.Drawing.Point(78, 15);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(29, 12);
             this.label8.TabIndex = 2;
@@ -534,19 +448,68 @@
             this.dgv_StockList.AllowUserToAddRows = false;
             this.dgv_StockList.AllowUserToDeleteRows = false;
             this.dgv_StockList.AllowUserToOrderColumns = true;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgv_StockList.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.dgv_StockList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.tableLayoutPanel1.SetColumnSpan(this.dgv_StockList, 2);
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgv_StockList.DefaultCellStyle = dataGridViewCellStyle6;
             this.dgv_StockList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgv_StockList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgv_StockList.Location = new System.Drawing.Point(3, 113);
             this.dgv_StockList.MultiSelect = false;
             this.dgv_StockList.Name = "dgv_StockList";
+            this.dgv_StockList.ReadOnly = true;
             this.dgv_StockList.RowHeadersVisible = false;
             this.dgv_StockList.RowTemplate.Height = 24;
+            this.dgv_StockList.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgv_StockList.Size = new System.Drawing.Size(914, 259);
             this.dgv_StockList.TabIndex = 3;
+            this.dgv_StockList.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_StockList_CellClick);
             this.dgv_StockList.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgv_StockList_CellMouseDown);
             this.dgv_StockList.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgv_StockList_DataError);
+            // 
+            // btn_ConfigStock
+            // 
+            this.btn_ConfigStock.Location = new System.Drawing.Point(189, 75);
+            this.btn_ConfigStock.Name = "btn_ConfigStock";
+            this.btn_ConfigStock.Size = new System.Drawing.Size(90, 23);
+            this.btn_ConfigStock.TabIndex = 20;
+            this.btn_ConfigStock.Text = "編輯股票設定";
+            this.btn_ConfigStock.UseVisualStyleBackColor = true;
+            this.btn_ConfigStock.Click += new System.EventHandler(this.btn_ConfigStock_Click);
+            // 
+            // btn_StartALL
+            // 
+            this.btn_StartALL.Location = new System.Drawing.Point(10, 75);
+            this.btn_StartALL.Name = "btn_StartALL";
+            this.btn_StartALL.Size = new System.Drawing.Size(75, 23);
+            this.btn_StartALL.TabIndex = 21;
+            this.btn_StartALL.Text = "全部啟動";
+            this.btn_StartALL.UseVisualStyleBackColor = true;
+            this.btn_StartALL.Click += new System.EventHandler(this.btn_StartALL_Click);
+            // 
+            // btn_StopAll
+            // 
+            this.btn_StopAll.Location = new System.Drawing.Point(91, 75);
+            this.btn_StopAll.Name = "btn_StopAll";
+            this.btn_StopAll.Size = new System.Drawing.Size(75, 23);
+            this.btn_StopAll.TabIndex = 22;
+            this.btn_StopAll.Text = "全部停止";
+            this.btn_StopAll.UseVisualStyleBackColor = true;
+            this.btn_StopAll.Click += new System.EventHandler(this.btn_StopAll_Click);
             // 
             // Form_Main
             // 
@@ -564,8 +527,6 @@
             this.groupBox_AddStock.ResumeLayout(false);
             this.groupBox_AddStock.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.nud_AmountThreshold)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_stoplossratio)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.nud_LockGainPrice)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.nud_BuyQty)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgv_StockList)).EndInit();
             this.ResumeLayout(false);
@@ -595,11 +556,7 @@
         private System.Windows.Forms.TextBox tb_StockID;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.NumericUpDown nud_LockGainPrice;
         private System.Windows.Forms.NumericUpDown nud_BuyQty;
-        private System.Windows.Forms.NumericUpDown nud_stoplossratio;
         private System.Windows.Forms.ComboBox cb_BuyMode;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label12;
@@ -610,6 +567,9 @@
         private System.Windows.Forms.DataGridView dgv_StockList;
         private System.Windows.Forms.Label label14;
         private System.Windows.Forms.NumericUpDown nud_AmountThreshold;
+        private System.Windows.Forms.Button btn_ConfigStock;
+        private System.Windows.Forms.Button btn_StopAll;
+        private System.Windows.Forms.Button btn_StartALL;
     }
 }
 

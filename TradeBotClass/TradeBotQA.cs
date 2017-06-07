@@ -42,7 +42,8 @@ namespace TradeBot
                 this.trade_status = TradeStatus.WaitingSellSignal;
                 PI31002 pi31002 = (PI31002)DepthLog[0];
                 decimal maxsellprice = pi31002.SELL_DEPTH[0].PRICE;
-                MatchLoger("下單買入:買入價位可能為:"+ maxsellprice.ToString());
+                MatchLoger("下單買入:"+pi31002.Match_Time.ToString()+" 買入價位可能為:"+ maxsellprice.ToString());
+                currentBuyMatchPrice = maxsellprice;
                 quotecom.OnRcvMessage -= WaitingBuy;
                 quotecom.OnRcvMessage += WaitingSell;
                 OnStatusChange(this.trade_status, stockid + ":下單買入");
@@ -60,7 +61,8 @@ namespace TradeBot
             {
                 PI31002 pi31002 = (PI31002)DepthLog[0];
                 decimal maxbuyprice = pi31002.BUY_DEPTH[0].PRICE;
-                MatchLoger("下單賣出:賣出價位可能為:" + maxbuyprice.ToString());
+                MatchLoger("下單賣出:"+pi31002.Match_Time.ToString()+" 賣出價位可能為:" + maxbuyprice.ToString());
+                currentSellMatchPrice = maxbuyprice;
                 this.trade_status = TradeStatus.StandBy;
                 quotecom.OnRcvMessage -= WaitingSell;
                
@@ -350,7 +352,10 @@ namespace TradeBot
                         }
                     }
                 }
-               
+
+                if (pi31002.Match_Time >= 132400) {
+                    BreakTrade("已收盤，結束偵測");
+                }
 
                 return false;
             }            
