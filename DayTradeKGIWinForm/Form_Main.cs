@@ -32,7 +32,7 @@ namespace TradeBot
         public  String id = "H220566876";
         public  String pwd = "0000";
         public const char area = ' ';
-        private string group = "";
+        //private string group = "";
         public  string brokerid = "";
         public  string account = "";
         public DataTable StockTable=new DataTable("StockList", "TradeBot");
@@ -42,6 +42,7 @@ namespace TradeBot
         public DataTable LockGainModeTable = new DataTable("LockGainModeList", "TradeBot");
         private string DownloadTarget = "";
         private StockEditor stockeditor;
+        private string StockHistoryFile = "stockhistory.csv";
 
 
         public Form_Main()
@@ -87,7 +88,7 @@ namespace TradeBot
             StockTable.Columns.Add("NL", typeof(double));
             StockTable.Columns.Add("AL", typeof(double));
             StockTable.Columns.Add("TradeBot", typeof(TradeBotBase));
-
+            StockTable.ColumnChanged += StockTable_ColumnChanged;
             
             //建立下拉選單表格
             BuyModeTable.Columns.Add("BuyMode", typeof(string));
@@ -293,8 +294,50 @@ namespace TradeBot
             {
                 Directory.CreateDirectory(this.DownloadTarget);
             }
-            Console.WriteLine(DownloadTarget);
+            //Console.WriteLine(DownloadTarget);
 
+            
+        }
+
+        private void StockTable_ColumnChanged(object sender, DataColumnChangeEventArgs e)
+        {
+            object val = e.Row["TradeBot"];
+            if (val != DBNull.Value) {
+                TradeBotBase tb = (TradeBotBase)e.Row["TradeBot"];
+                switch (e.Column.ColumnName)
+                {
+                    case "AmountThreshold":
+                        tb.AmountThreshold = Convert.ToInt32(e.Row[e.Column.ColumnName]);
+                        AddInfo("AmountThreshold=" + tb.AmountThreshold);
+                        break;
+                    case "BuyQty":
+                        tb.BuyQty = Convert.ToUInt16(e.Row[e.Column.ColumnName]);
+                        AddInfo("BuyQty=" + tb.BuyQty);
+                        break;
+                    case "BuyMode":
+                        if (e.Row[e.Column.ColumnName].ToString() == "Auto")
+                            tb.buy_mode = BuyMode.Auto;
+                        else
+                            tb.buy_mode = BuyMode.Notify;
+                        AddInfo("BuyMode=" + tb.buy_mode);
+                        break;
+                    case "StopLossMode":
+                        if (e.Row[e.Column.ColumnName].ToString() == "Auto")
+                            tb.stoplossmode = StopLossMode.Auto;
+                        else
+                            tb.stoplossmode = StopLossMode.Manual;
+                        AddInfo("BuyMode=" + tb.stoplossmode);
+                        break;
+                    case "LockGainMode":
+                        if (e.Row[e.Column.ColumnName].ToString() == "Auto")
+                            tb.lockgainmode = LockGainMode.Auto;
+                        else
+                            tb.lockgainmode = LockGainMode.Manual;
+                        AddInfo("BuyMode=" + tb.lockgainmode);
+                        break;
+
+                }
+            }
             
         }
 
@@ -331,6 +374,8 @@ namespace TradeBot
                 quotecom.SubQuotesDepth(stockid);
                 quotecom.SubQuotesMatch(stockid);
                 TradeBotBase tb = (TradeBotBase)StockRow["TradeBot"];
+                tb.StatusChange += TradeBotStatusChanges;
+                tb.FieldValueChange += TradeBotFieldValueChanges;
                 tb.Start();
                 StockRow["ClosePrice"] = tb.ClosePrice;
                 StockRow["AH"] = tb.CDP_AH;
@@ -400,7 +445,7 @@ namespace TradeBot
                 row["BuyMode"] = buymode;
                 row["StopLossMode"] = stoplossmode;
                 row["LockGainMode"] = lockgainmode;
-                TradeBotBase tb = new TradeBotQA(stockid, brokerid, account, buyqty, quotecom, tfcom, AmountThreshold, buymode, stoplossmode, lockgainmode);
+                TradeBotBase tb = new TradeBotLongQA(stockid, brokerid, account, buyqty, quotecom, tfcom, AmountThreshold, buymode, stoplossmode, lockgainmode);
                 tb.StatusChange += TradeBotStatusChanges;
                 tb.FieldValueChange += TradeBotFieldValueChanges;
                 row["Status"] = tb.trade_status;
@@ -873,7 +918,23 @@ namespace TradeBot
             }
             tb_ServerTime.Text = String.Format("{0:yyyy/MM/dd hh:mm:ss.fff}", serverTime);
             tb_HeartBeats.Text = ConnQuality.ToString();
-            
+
+            //132500 尚未成交 強制跌停賣出           
+            DateTime dtTarget = new DateTime(serverTime.Year, serverTime.Month, serverTime.Day, 13, 25, 0);
+            if (DateTime.Compare(serverTime, dtTarget) > 0)
+            {
+                foreach (DataRow row in StockTable.Rows)
+                {
+                    string ts = row["Status"].ToString();
+                    string stockid = row["StockID"].ToString();
+                    if (ts == TradeStatus.WaitingSell.ToString() || ts == TradeStatus.WaitingSellSignal.ToString()) {
+                        AddInfo(stockid + ":準備收盤，強制賣出");
+                        TradeBotBase tb = (TradeBotBase)row["TradeBot"];
+                        tb.SellStock();
+                    }
+                       
+                }
+            }
             //AddInfo(String.Format("{0:hh:mm:ss.fff}", serverTime));
             //AddInfo("[" + ConnQuality + "]");
         }
@@ -943,7 +1004,7 @@ namespace TradeBot
                 //MessageBox.Show("A row with the primary key of " + pi31001.StockNo + " could not be found");
             }
         }
-        private void TradeBotStatusChanges(object sender, TradeStatus tradestatus, string msg)
+        public void TradeBotStatusChanges(object sender, TradeStatus tradestatus, string msg)
         {
             TradeBotBase tb = (TradeBotBase)sender;
             DataRow StockRow = StockTable.Rows.Find(tb.stockid);
@@ -955,7 +1016,7 @@ namespace TradeBot
             //Console.WriteLine("Message:" + msg);
         }
 
-        private void TradeBotFieldValueChanges(object sender, String FieldName, object Value) {
+        public void TradeBotFieldValueChanges(object sender, String FieldName, object Value) {
             TradeBotBase tb = (TradeBotBase)sender;
 
             switch (FieldName) {
@@ -987,6 +1048,23 @@ namespace TradeBot
 
         private void Form_Main_FormClosed(object sender, FormClosedEventArgs e)
         {
+            //儲存股票資料, 先清楚舊檔
+            if (StockTable.Rows.Count > 0) {
+                DialogResult result = MessageBox.Show("是否要儲存股票清單?將會覆蓋原來檔案。", "警告", MessageBoxButtons.YesNo);
+                if (result == DialogResult.Yes)
+                {
+                    System.IO.File.WriteAllText(StockHistoryFile, string.Empty);
+                    foreach (DataRow row in StockTable.Rows)
+                    {
+                        var newLine = string.Format("{0},{1},{2},{3},{4},{5}", row["StockID"], row["AmountThreshold"], row["BuyMode"], row["StopLossMode"], row["LockGainMode"], row["BuyQty"]);
+                        using (StreamWriter w = File.AppendText(StockHistoryFile))
+                        {
+                            w.WriteLine(newLine);
+                        }
+                    }
+                }
+            }
+      
             Environment.Exit(0);
         }
 
@@ -1003,7 +1081,7 @@ namespace TradeBot
 
             //初始化股票設定視窗
             if(stockeditor==null)
-                stockeditor = new StockEditor(StockTable);
+                stockeditor = new StockEditor(StockTable,quotecom,tfcom,brokerid,account,StockHistoryFile);
             if(!stockeditor.Visible)
                 stockeditor.Show();
         }

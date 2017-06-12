@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Intelligence;
 using Package;
 using System.Data.SQLite;
+using System.IO;
 
 namespace TradeBot
 {
@@ -111,6 +112,9 @@ namespace TradeBot
         //綠單次數紀錄
         protected int GreenMatchCount;
 
+        //買入賣出成交紀錄目錄
+        protected string MatchLogFolder = "";
+        
         public TradeBotBase(String stockid, string brokerid, string account, ushort BuyQty, Intelligence.QuoteCom quotecom, Smart.TaiFexCom taifexcom, int amountthreshold, BuyMode buymode, StopLossMode stoplossmode, LockGainMode lockgainmode)
         {
             this.stockid = stockid;
@@ -129,9 +133,29 @@ namespace TradeBot
             this.trade_status = TradeStatus.StandBy;
             OnStatusChange(this.trade_status, stockid + ":待命中");
 
+            //初始化成交明細下載目錄
+            this.MatchLogFolder = Path.Combine(Directory.GetCurrentDirectory(), DateTime.Now.ToString("yyyyMMdd"));
+            //建立目錄
+            if (!Directory.Exists(this.MatchLogFolder))
+            {
+                Directory.CreateDirectory(this.MatchLogFolder);
+            }
+
         }
 
         public decimal CurrentBuyMatchPrice { get => currentBuyMatchPrice; }
+        public decimal CurrentSellMatchPrice { get => currentSellMatchPrice; }
+
+        //紀錄買入成交時間價位與賣出原因時間價位
+        protected void MatchLoger(String msg)
+        {
+            string combined = Path.Combine(this.MatchLogFolder, this.stockid + ".txt");
+            using (StreamWriter w = File.AppendText(combined))
+            {
+                string fMsg = String.Format("[{0}] {1}", DateTime.Now.ToString("hh:mm:ss:ffff"), msg);
+                w.WriteLine(fMsg);
+            }
+        }
 
         //開始執行
         public void Start()
@@ -166,11 +190,6 @@ namespace TradeBot
                 OnStatusChange(this.trade_status, stockid + ":等待買入訊號");
 
             }
-
-            
-
-            
-
         }
 
         //手動中止偵測
@@ -647,7 +666,7 @@ namespace TradeBot
         }
 
         
-
+        //計算平均成交價
         private decimal CalAvgMatchPrice(List<DealRpt> list)
         {
             decimal weight = 0.0m;
@@ -686,10 +705,6 @@ namespace TradeBot
             }
 
         }
-
-       
-
-       
 
         public void ConfirmSellMatch(object sender, PackageBase package)
         {

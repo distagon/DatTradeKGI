@@ -7,7 +7,7 @@
     <ProjectGuid>{369D392F-E7B0-4BF3-985B-E97683FD19D0}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>TradeBotClass</RootNamespace>
+    <RootNamespace>TradeBot</RootNamespace>
     <AssemblyName>TradeBotClass</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -67,8 +67,8 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TradeBotBase.cs" />
-    <Compile Include="TradeBotQA.cs" />
-    <Compile Include="TradeBotTest.cs" />
+    <Compile Include="TradeBotLongQA.cs" />
+    <Compile Include="TradeBotLong.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

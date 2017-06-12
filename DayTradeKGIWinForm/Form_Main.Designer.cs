@@ -28,8 +28,8 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             this.tb_Log = new System.Windows.Forms.TextBox();
             this.groupBox_Login = new System.Windows.Forms.GroupBox();
@@ -47,6 +47,9 @@
             this.label1 = new System.Windows.Forms.Label();
             this.cb_Host = new System.Windows.Forms.ComboBox();
             this.groupBox_AddStock = new System.Windows.Forms.GroupBox();
+            this.btn_StopAll = new System.Windows.Forms.Button();
+            this.btn_StartALL = new System.Windows.Forms.Button();
+            this.btn_ConfigStock = new System.Windows.Forms.Button();
             this.nud_AmountThreshold = new System.Windows.Forms.NumericUpDown();
             this.label14 = new System.Windows.Forms.Label();
             this.btn_AddStock = new System.Windows.Forms.Button();
@@ -61,9 +64,6 @@
             this.tb_StockID = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
             this.dgv_StockList = new System.Windows.Forms.DataGridView();
-            this.btn_ConfigStock = new System.Windows.Forms.Button();
-            this.btn_StartALL = new System.Windows.Forms.Button();
-            this.btn_StopAll = new System.Windows.Forms.Button();
             this.tableLayoutPanel1.SuspendLayout();
             this.groupBox_Login.SuspendLayout();
             this.groupBox_AddStock.SuspendLayout();
@@ -281,6 +281,36 @@
             this.groupBox_AddStock.TabStop = false;
             this.groupBox_AddStock.Text = "新增股票";
             // 
+            // btn_StopAll
+            // 
+            this.btn_StopAll.Location = new System.Drawing.Point(91, 75);
+            this.btn_StopAll.Name = "btn_StopAll";
+            this.btn_StopAll.Size = new System.Drawing.Size(75, 23);
+            this.btn_StopAll.TabIndex = 22;
+            this.btn_StopAll.Text = "全部停止";
+            this.btn_StopAll.UseVisualStyleBackColor = true;
+            this.btn_StopAll.Click += new System.EventHandler(this.btn_StopAll_Click);
+            // 
+            // btn_StartALL
+            // 
+            this.btn_StartALL.Location = new System.Drawing.Point(10, 75);
+            this.btn_StartALL.Name = "btn_StartALL";
+            this.btn_StartALL.Size = new System.Drawing.Size(75, 23);
+            this.btn_StartALL.TabIndex = 21;
+            this.btn_StartALL.Text = "全部啟動";
+            this.btn_StartALL.UseVisualStyleBackColor = true;
+            this.btn_StartALL.Click += new System.EventHandler(this.btn_StartALL_Click);
+            // 
+            // btn_ConfigStock
+            // 
+            this.btn_ConfigStock.Location = new System.Drawing.Point(189, 75);
+            this.btn_ConfigStock.Name = "btn_ConfigStock";
+            this.btn_ConfigStock.Size = new System.Drawing.Size(90, 23);
+            this.btn_ConfigStock.TabIndex = 20;
+            this.btn_ConfigStock.Text = "編輯股票設定";
+            this.btn_ConfigStock.UseVisualStyleBackColor = true;
+            this.btn_ConfigStock.Click += new System.EventHandler(this.btn_ConfigStock_Click);
+            // 
             // nud_AmountThreshold
             // 
             this.nud_AmountThreshold.Increment = new decimal(new int[] {
@@ -448,24 +478,24 @@
             this.dgv_StockList.AllowUserToAddRows = false;
             this.dgv_StockList.AllowUserToDeleteRows = false;
             this.dgv_StockList.AllowUserToOrderColumns = true;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle5.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgv_StockList.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle9.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgv_StockList.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
             this.dgv_StockList.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.tableLayoutPanel1.SetColumnSpan(this.dgv_StockList, 2);
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgv_StockList.DefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle10.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle10.Font = new System.Drawing.Font("新細明體", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(136)));
+            dataGridViewCellStyle10.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle10.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle10.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle10.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgv_StockList.DefaultCellStyle = dataGridViewCellStyle10;
             this.dgv_StockList.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgv_StockList.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgv_StockList.Location = new System.Drawing.Point(3, 113);
@@ -480,36 +510,6 @@
             this.dgv_StockList.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgv_StockList_CellClick);
             this.dgv_StockList.CellMouseDown += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgv_StockList_CellMouseDown);
             this.dgv_StockList.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgv_StockList_DataError);
-            // 
-            // btn_ConfigStock
-            // 
-            this.btn_ConfigStock.Location = new System.Drawing.Point(189, 75);
-            this.btn_ConfigStock.Name = "btn_ConfigStock";
-            this.btn_ConfigStock.Size = new System.Drawing.Size(90, 23);
-            this.btn_ConfigStock.TabIndex = 20;
-            this.btn_ConfigStock.Text = "編輯股票設定";
-            this.btn_ConfigStock.UseVisualStyleBackColor = true;
-            this.btn_ConfigStock.Click += new System.EventHandler(this.btn_ConfigStock_Click);
-            // 
-            // btn_StartALL
-            // 
-            this.btn_StartALL.Location = new System.Drawing.Point(10, 75);
-            this.btn_StartALL.Name = "btn_StartALL";
-            this.btn_StartALL.Size = new System.Drawing.Size(75, 23);
-            this.btn_StartALL.TabIndex = 21;
-            this.btn_StartALL.Text = "全部啟動";
-            this.btn_StartALL.UseVisualStyleBackColor = true;
-            this.btn_StartALL.Click += new System.EventHandler(this.btn_StartALL_Click);
-            // 
-            // btn_StopAll
-            // 
-            this.btn_StopAll.Location = new System.Drawing.Point(91, 75);
-            this.btn_StopAll.Name = "btn_StopAll";
-            this.btn_StopAll.Size = new System.Drawing.Size(75, 23);
-            this.btn_StopAll.TabIndex = 22;
-            this.btn_StopAll.Text = "全部停止";
-            this.btn_StopAll.UseVisualStyleBackColor = true;
-            this.btn_StopAll.Click += new System.EventHandler(this.btn_StopAll_Click);
             // 
             // Form_Main
             // 
