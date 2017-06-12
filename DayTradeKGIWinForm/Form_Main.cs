@@ -283,9 +283,9 @@ namespace TradeBot
 
             //設定下拉選單預設值
             cb_Host.SelectedIndex = 0;
-            cb_BuyMode.SelectedIndex = 0;
-            cb_StopLossMode.SelectedIndex = 0;
-            cb_LockGainMode.SelectedIndex = 0;
+            //cb_BuyMode.SelectedIndex = 0;
+            //cb_StopLossMode.SelectedIndex = 0;
+            //cb_LockGainMode.SelectedIndex = 0;
 
             //初始化成交明細下載目錄
             this.DownloadTarget = Path.Combine( Directory.GetCurrentDirectory(),DateTime.Now.ToString("yyyyMMdd"));
@@ -426,36 +426,36 @@ namespace TradeBot
            
         }
 
-        private void btn_AddStock_Click(object sender, EventArgs e)
-        {           
-            string stockid = tb_StockID.Text;
-            if (!StockTable.Rows.Contains(stockid))
-            {
-                ushort buyqty = (ushort)nud_BuyQty.Value;
-                //decimal stoplossratio = (decimal)nud_stoplossratio.Value;
-                //decimal lockgainprice = (decimal)nud_LockGainPrice.Value;
-                int AmountThreshold = (Int32)nud_AmountThreshold.Value;
-                BuyMode buymode = cb_BuyMode.SelectedIndex == 0 ? BuyMode.Auto : BuyMode.Notify;
-                StopLossMode stoplossmode = cb_StopLossMode.SelectedIndex == 0 ? StopLossMode.Auto : StopLossMode.Manual;
-                LockGainMode lockgainmode = cb_LockGainMode.SelectedIndex == 0 ? LockGainMode.Auto : LockGainMode.Manual;
-                DataRow row = StockTable.NewRow();
-                row["StockID"] = stockid;
-                row["AmountThreshold"] = AmountThreshold;
-                row["BuyQty"] = buyqty;
-                row["BuyMode"] = buymode;
-                row["StopLossMode"] = stoplossmode;
-                row["LockGainMode"] = lockgainmode;
-                TradeBotBase tb = new TradeBotLongQA(stockid, brokerid, account, buyqty, quotecom, tfcom, AmountThreshold, buymode, stoplossmode, lockgainmode);
-                tb.StatusChange += TradeBotStatusChanges;
-                tb.FieldValueChange += TradeBotFieldValueChanges;
-                row["Status"] = tb.trade_status;
-                row["TradeBot"] = tb;
-                StockTable.Rows.Add(row);
-            }
-            else
-                MessageBox.Show("該檔股票已存在");
+        //private void btn_AddStock_Click(object sender, EventArgs e)
+        //{           
+        //    string stockid = tb_StockID.Text;
+        //    if (!StockTable.Rows.Contains(stockid))
+        //    {
+        //        ushort buyqty = (ushort)nud_BuyQty.Value;
+        //        //decimal stoplossratio = (decimal)nud_stoplossratio.Value;
+        //        //decimal lockgainprice = (decimal)nud_LockGainPrice.Value;
+        //        int AmountThreshold = (Int32)nud_AmountThreshold.Value;
+        //        BuyMode buymode = cb_BuyMode.SelectedIndex == 0 ? BuyMode.Auto : BuyMode.Notify;
+        //        StopLossMode stoplossmode = cb_StopLossMode.SelectedIndex == 0 ? StopLossMode.Auto : StopLossMode.Manual;
+        //        LockGainMode lockgainmode = cb_LockGainMode.SelectedIndex == 0 ? LockGainMode.Auto : LockGainMode.Manual;
+        //        DataRow row = StockTable.NewRow();
+        //        row["StockID"] = stockid;
+        //        row["AmountThreshold"] = AmountThreshold;
+        //        row["BuyQty"] = buyqty;
+        //        row["BuyMode"] = buymode;
+        //        row["StopLossMode"] = stoplossmode;
+        //        row["LockGainMode"] = lockgainmode;
+        //        TradeBotBase tb = new TradeBotLongQA(stockid, brokerid, account, buyqty, quotecom, tfcom, AmountThreshold, buymode, stoplossmode, lockgainmode);
+        //        tb.StatusChange += TradeBotStatusChanges;
+        //        tb.FieldValueChange += TradeBotFieldValueChanges;
+        //        row["Status"] = tb.trade_status;
+        //        row["TradeBot"] = tb;
+        //        StockTable.Rows.Add(row);
+        //    }
+        //    else
+        //        MessageBox.Show("該檔股票已存在");
             
-        }
+        //}
 
         private void dgv_StockList_CellMouseDown(object sender, DataGridViewCellMouseEventArgs e)
         {
